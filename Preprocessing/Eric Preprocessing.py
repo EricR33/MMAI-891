@@ -13,7 +13,6 @@ for i in range(len(dataset)):
     dataset[i] = re.sub(r'\W', ' ', dataset[i])     # Cleans out any non-ASCII characters
     dataset[i] = re.sub(r'\s+', ' ', dataset[i])    # Converts any whitespace 1 or more into 1 space
 
-
 # Creating Histogram
 word2count = {}
 for data in dataset:
@@ -26,19 +25,6 @@ for data in dataset:
 
 freq_words = heapq.nlargest(100, word2count, key=word2count.get)
 
-# Creating the bag of words array
-x = []
-for data in dataset:
-    vector = []
-    for word in freq_words:
-        if word in nltk.word_tokenize(data):
-            vector.append(1)                    # appends a 1 to the vector list if the frequent word is in the tokenized sentence
-        else:
-            vector.append(0)                    # appends a 0 to the vector list if the frequent word is not in the tokenized sentence
-    x.append(vector)                            # appends the vector list to the x list which has a shape of 20 (documents) x 100 (frequent words
-
-x = np.asarray(x)
-
 # TF Calculation
 tf_matrix = {}
 for word in freq_words:     # iterates through the frequent words list
@@ -49,13 +35,10 @@ for word in freq_words:     # iterates through the frequent words list
             if w == word:                       # if the tokenized word is equal to the frequent word
                 frequency += 1                  # add 1 to the frequency
         tf_word = frequency / len(nltk.word_tokenize(data))
-        print(f'the frequent word is: {word}, w is: {w},the frequency is: {frequency}, '
-              f'the document length is: {len(nltk.word_tokenize(data))},'
-              f'the tf_word calculation is: {tf_word}')
         doc_tf.append(tf_word)
     tf_matrix[word] = doc_tf
 
-# IDF Calculation
+#IDF Calculation
 word_idfs = {}
 for word in freq_words:     # iterates through the frequent words list
     doc_count = 0           # sets the document counter to 0
@@ -71,8 +54,10 @@ for word in freq_words:     # iterates through the frequent words list
 
 # TF - IDF Calculation
 tfidf_matrix = []
-for word in tf_matrix.keys():
-    tfidf = []
-    for value in tf_matrix[word]:
-        score = value * word_idfs[word]
-        tfidf.append(score)
+for word in tf_matrix.keys():               # iterates through the term frequency keys
+    tfidf = []                              # creates a blank list
+    for value in tf_matrix[word]:           # iterates through the tf_matrix dictionary values based on the term frequency key slected
+        score = value * word_idfs[word]     # Multiplies the TF values by the IDF value for the word
+        print(f'the word key is: {word}, the value is: {value}, the score is {score},\n the idf word is {word_idfs[word]} ')
+        tfidf.append(score)                 # Append the score to the tfidf list which contains the list for 1 key
+    tfidf_matrix.append(tfidf)              # Append all of the scores relating to the keys back into the large matrix
