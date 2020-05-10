@@ -61,3 +61,7 @@ for word in tf_matrix.keys():               # iterates through the term frequenc
         print(f'the word key is: {word}, the value is: {value}, the score is {score},\n the idf word is {word_idfs[word]} ')
         tfidf.append(score)                 # Append the score to the tfidf list which contains the list for 1 key
     tfidf_matrix.append(tfidf)              # Append all of the scores relating to the keys back into the large matrix
+
+    # Convert the model to an array
+    X = np.asarray(tfidf_matrix)
+    X = np.transpose(X)
