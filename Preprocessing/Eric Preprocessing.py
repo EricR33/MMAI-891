@@ -2,6 +2,73 @@ import nltk
 import numpy as np
 import heapq
 import re
+import pandas as pd
+import os
+import pandas_profiling
+
+# Set the current working directory
+cd '/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project/'
+
+# Directories
+DATASET_DIR = './asap-aes/'
+WORKBOOK_DIR = './Courses/'
+
+# Import .tsv file into Data Frame
+df = pd.read_csv(os.path.join(DATASET_DIR, "training_set_rel3.tsv"), sep='\t', encoding='ISO-8859-1')
+
+# Ensure that that the initial shape represents the actual file
+df.head()
+df.shape
+
+# Downsize the dataframe to only include columns up to and including column 6 "domain1_score"
+df = df.iloc[:,0:7]
+df.head()
+df.shape
+
+# Assign the y variable to 'domain1_score', check the shape and head of the y variable
+y = df['domain1_score']
+y.head()
+y.shape
+
+# Assign the X variable to columns = 'essay_id', 'essay_set', and 'essay'. Check the shape, head, description
+X = df.iloc[:, 0:3]
+X.head()
+X.shape
+X.describe
+
+# Pandas Profiler Report
+
+
+
+# Regular Expression Cleaning
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 paragraph = 'I saw a dog'
 
@@ -65,3 +132,38 @@ for word in tf_matrix.keys():               # iterates through the term frequenc
     # Convert the model to an array
     X = np.asarray(tfidf_matrix)
     X = np.transpose(X)
+
+
+# N-gram Modelling (Character Based)
+
+text = """Global warming or climate change has become a worldwide concern. It is gradually developing into an 
+        unprecedented environmental crisis evident in melting glaciers, changing weather patterns, rising sea levels, 
+        floods, cyclones and droughts. Global warming implies an increase in the average temperature of the Earth due 
+        to entrapment of greenhouse gases in the earth’s atmosphere."""
+
+n = 3   # number of ngrams = trigram is 3
+
+ngrams = {}
+# Create the n-grams
+for i in range(len(text) - n):          # Iterate through the characters in the list
+    gram = text[i:i+n]                  # set the gram equal to 3 characters in sequence within the text
+    print(f'ngram is: {gram}; ngrams dictionary is: {ngrams}')
+    if gram not in ngrams.keys():       # creating an empty list if the gram is not within the ngrams dictionary keys
+        ngrams[gram] = []
+    ngrams[gram].append(text[i+n])      # appending the character that appears after the ngram to the as the value that relates to the ngram dictionary key(gram)
+
+# N-Gram Testing
+current_gram = text[0:n]        # This is selecting a n-gram
+result = current_gram           # Sets the result equal to current gram
+for i in range(100):
+    if current_gram not in ngrams.keys():   # We want to break out of the loop if the current gram is not in the dictionary
+        break
+    possibilities = ngrams[current_gram]    # Returns the dictionary values for the current gram key within the ngrams dictionary
+    print(possibilities)
+    next_item = possibilities[random.randrange(len(possibilities))]         # randomly selects a character within the dictionary values relating to the current gram key
+    result += next_item         # appends the randomly selected character to the current gram
+    current_gram = result[len(result) - n:len(result)]      # This returns the current gram after the new character was added to the result
+    # Example --> current_gram is 'Glo'. next_item is selected as 'b'. 'b' is appended to result to form 'Glob'
+    # current_gram is then set to 'lob' and the process continues
+
+print(result)
