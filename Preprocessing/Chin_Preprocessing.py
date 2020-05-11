@@ -32,7 +32,6 @@ plt.rcParams['figure.dpi']= 100
 import warnings
 warnings.simplefilter("ignore", DeprecationWarning)
 
-#######################################################
 import re, string, unicodedata
 import nltk
 #`nltk.download('popular')
@@ -42,6 +41,11 @@ import nltk
 from nltk import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import LancasterStemmer, WordNetLemmatizer
+
+import pprint
+import pickle
+#######################################################
+
 
 df = pd.read_csv("training_set_rel3.tsv", sep='\t', encoding='ISO-8859-1')
 df = df.dropna(axis=1)
@@ -81,60 +85,63 @@ scores = set1['domain1_score']
 
 print(texts)
 
-# # SymSpellPy
-#
-# # maximum edit distance per dictionary precalculation
-# max_edit_distance_dictionary = 2
-# prefix_length = 7
-#
-#
-# def findSuggestions(max_edit_distance_dictionary, prefix_length):
-#     # create object
-#     sym_spell = SymSpell(max_edit_distance_dictionary, prefix_length)
-#
-#     # load dictionary
-#     dictionary_path = pkg_resources.resource_filename("symspellpy", "frequency_dictionary_en_82_765.txt")
-#     bigram_path = pkg_resources.resource_filename("symspellpy", "frequency_bigramdictionary_en_243_342.txt")
-#
-#     # term_index is the column of the term and count_index is the
-#     # column of the term frequency
-#     if not sym_spell.load_dictionary(dictionary_path, term_index=0,
-#                                      count_index=1):
-#         print("Dictionary file not found")
-#         return
-#
-#     print("Dictionary found")
-#
-#     if not sym_spell.load_bigram_dictionary(bigram_path, term_index=0,
-#                                             count_index=2):
-#         print("Bigram dictionary file not found")
-#         return
-#
-#     print("Bigram dictionary found")
-#
-#     # max edit distance per lookup (per single word, not per whole input string)
-#     max_edit_distance_lookup = 2
-#
-#     suggestions = [sym_spell.lookup_compound(input_term,
-#                                             max_edit_distance_lookup,
-#                                             transfer_casing=True) for input_term in texts]
-#     return suggestions
-#
-# suggest = findSuggestions(max_edit_distance_dictionary, prefix_length)
-#
-# # Create a new table to combine all the elements
-# result = []
-#
-# for i in np.arange(0, len(texts)):
-#     elm=[suggest[i].term, scores[i]]
-#     result.append(elm)
-#
-# # Create a pickle file to store and relink the cleaned up essay data and scores
-# import pickle
-#
-# file = open('Essay1_SpellCheck',"wb")
-#
-# pickle.dump(result, file)
-#
-# file.close()
+# SymSpellPy
 
+# maximum edit distance per dictionary precalculation
+max_edit_distance_dictionary = 2
+prefix_length = 7
+
+
+def findSuggestions(max_edit_distance_dictionary, prefix_length):
+    # create object
+    sym_spell = SymSpell(max_edit_distance_dictionary, prefix_length)
+
+    # load dictionary
+    dictionary_path = pkg_resources.resource_filename("symspellpy", "frequency_dictionary_en_82_765.txt")
+    bigram_path = pkg_resources.resource_filename("symspellpy", "frequency_bigramdictionary_en_243_342.txt")
+
+    # term_index is the column of the term and count_index is the
+    # column of the term frequency
+    if not sym_spell.load_dictionary(dictionary_path, term_index=0,
+                                     count_index=1):
+        print("Dictionary file not found")
+        return
+
+    print("Dictionary found")
+
+    if not sym_spell.load_bigram_dictionary(bigram_path, term_index=0,
+                                            count_index=2):
+        print("Bigram dictionary file not found")
+        return
+
+    print("Bigram dictionary found")
+
+    # max edit distance per lookup (per single word, not per whole input string)
+    max_edit_distance_lookup = 2
+
+    suggestions = [sym_spell.lookup_compound(input_term,
+                                             max_edit_distance_lookup,
+                                             transfer_casing=True)
+                   for input_term in texts]
+    return suggestions
+
+suggest = findSuggestions(max_edit_distance_dictionary, prefix_length)
+
+print (suggest)
+
+# Create a new table to combine all the elements
+result = []
+
+for i in np.arange(0, len(texts)):
+    elm=[suggest[i][0].term, scores[i]]
+    result.append(elm)
+
+pprint.pprint([result[i] for i in np.arange(0, 10)])
+
+# Create Pickle File
+
+file = open('Essay1_SpellCheck.p',"wb")
+
+pickle.dump(result,file)
+
+file.close()
