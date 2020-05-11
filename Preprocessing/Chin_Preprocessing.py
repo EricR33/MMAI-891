@@ -44,6 +44,9 @@ from nltk.stem import LancasterStemmer, WordNetLemmatizer
 
 import pprint
 import pickle
+# From SymSpellPy
+import pkg_resources
+from symspellpy.symspellpy import SymSpell, Verbosity
 #######################################################
 
 
