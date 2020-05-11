@@ -2,6 +2,73 @@ import nltk
 import numpy as np
 import heapq
 import re
+import pandas as pd
+import os
+import pandas_profiling
+
+# Set the current working directory
+cd '/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project/'
+
+# Directories
+DATASET_DIR = './asap-aes/'
+WORKBOOK_DIR = './Courses/'
+
+# Import .tsv file into Data Frame
+df = pd.read_csv(os.path.join(DATASET_DIR, "training_set_rel3.tsv"), sep='\t', encoding='ISO-8859-1')
+
+# Ensure that that the initial shape represents the actual file
+df.head()
+df.shape
+
+# Downsize the dataframe to only include columns up to and including column 6 "domain1_score"
+df = df.iloc[:,0:7]
+df.head()
+df.shape
+
+# Assign the y variable to 'domain1_score', check the shape and head of the y variable
+y = df['domain1_score']
+y.head()
+y.shape
+
+# Assign the X variable to columns = 'essay_id', 'essay_set', and 'essay'. Check the shape, head, description
+X = df.iloc[:, 0:3]
+X.head()
+X.shape
+X.describe
+
+# Pandas Profiler Report
+
+
+
+# Regular Expression Cleaning
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 paragraph = 'I saw a dog'
 
@@ -67,7 +134,7 @@ for word in tf_matrix.keys():               # iterates through the term frequenc
     X = np.transpose(X)
 
 
-# N-gram Modelling
+# N-gram Modelling (Character Based)
 
 text = """Global warming or climate change has become a worldwide concern. It is gradually developing into an 
         unprecedented environmental crisis evident in melting glaciers, changing weather patterns, rising sea levels, 
