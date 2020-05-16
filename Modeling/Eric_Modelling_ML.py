@@ -116,3 +116,4 @@ X = pd.DataFrame(X['essay_pre'])
 
 vectorizer = TfidfVectorizer(max_df=0.7, min_df=0.05, max_features=500, ngram_range=[1,3])
 dtm = vectorizer.fit_transform(X['essay_pre'])
+
