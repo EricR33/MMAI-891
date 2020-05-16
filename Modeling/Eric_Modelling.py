@@ -145,7 +145,6 @@ X = pd.DataFrame(X['essay_pre'])
 
 # Delete the essays that have less than 200 words ~ approx. 20 essays
 
-
 # Setting up the Keras LSTM Network
 # the code below is taken from https://towardsdatascience.com/multi-class-text-classification-with-lstm-1590bee1bd17
 MAX_NB_WORDS = 5000
