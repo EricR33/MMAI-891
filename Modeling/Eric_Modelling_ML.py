@@ -1,7 +1,8 @@
 import os
 import textstat
 # import nltk
-import re
+import re, collections
+from collections import defaultdict
 import unidecode
 # import numpy as np
 import pandas as pd
@@ -104,6 +105,39 @@ def preprocess(x):
     return ' '.join(x)
 
 
+# checking number of misspelled words (This is taken from https://github.com/shubhpawar/Automated-Essay-Scoring)
+
+def count_spell_error(essay):
+    clean_essay = re.sub(r'\W', ' ', str(essay).lower())
+    clean_essay = re.sub(r'[0-9]', '', clean_essay)
+
+    # big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
+    #         and lists of most frequent words from Wiktionary and the British National Corpus.
+    #         It contains about a million words.
+    data = open('big.txt').read()
+
+    words_ = re.findall('[a-z]+', data.lower())
+
+    word_dict = collections.defaultdict(lambda: 0)
+
+    for word in words_:
+        word_dict[word] += 1
+
+    clean_essay = re.sub(r'\W', ' ', str(essay).lower())
+    clean_essay = re.sub(r'[0-9]', '', clean_essay)
+
+    mispell_count = 0
+
+    words = clean_essay.split()
+
+    for word in words:
+        if not word in word_dict:
+            mispell_count += 1
+
+    return mispell_count
+
+# Applying the preprocessing functions
+
 df1['essay_pre'] = df1['essay'].apply(preprocess)
 
 print(df1.iloc[0, :].essay)
@@ -111,20 +145,23 @@ print(df1.iloc[0, :].essay_pre)
 
 df1 = pd.DataFrame(df1['essay_pre'])
 
-vectorizer = TfidfVectorizer(max_df=0.5, min_df=0.05, max_features=500, ngram_range=[1,3])
+# Vectorizing the text and converting to columns (taken from Steve's Session 5)
+
+vectorizer = TfidfVectorizer(max_df=0.5, min_df=0.05, max_features=500, ngram_range=[1, 3])
 dtm = vectorizer.fit_transform(df1['essay_pre'])
 
 vectorizer.get_feature_names()
 
-bow_df = pd.DataFrame(dtm.toarray(), columns=vectorizer.get_feature_names(),index=df1.index)
+bow_df = pd.DataFrame(dtm.toarray(), columns=vectorizer.get_feature_names(), index=df1.index)
 
 df1_bow = pd.concat([df1, bow_df], axis=1)
 print(df1_bow.shape)
 
-# Feature Engineering
-df1_bow['length'] = df1_bow['essay_pre'].apply(lambda x: len(x))
-df1_bow['syllable count'] = df1_bow['essay_pre'].apply(lambda x: textstat.syllable_count(x))
-df1_bow['flesch_reading_ease'] = df1_bow['essay_pre'].apply(lambda x: textstat.flesch_reading_ease(x))
+# Feature Engineering (#Taken from Steve's Lecture 5)
+df1_bow['Spelling_Mistakes_Count'] = df1_bow['essay_pre'].apply(count_spell_error)
+df1_bow['Length'] = df1_bow['essay_pre'].apply(lambda x: len(x))
+df1_bow['Syllable_Count'] = df1_bow['essay_pre'].apply(lambda x: textstat.syllable_count(x))
+df1_bow['Flesch_Reading_Ease'] = df1_bow['essay_pre'].apply(lambda x: textstat.flesch_reading_ease(x))
 df1_bow = df1_bow.drop(['essay_pre'], axis=1)
 
 # Split X & Y From Dataframe
