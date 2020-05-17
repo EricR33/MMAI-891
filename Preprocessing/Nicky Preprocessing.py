@@ -164,6 +164,7 @@ import tensorflow_hub as hub
 
 from tensorflow.keras import layers
 import random
+import math
 
 # Load pre-trained model tokenizer (vocabulary)
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -189,7 +190,7 @@ corpus1[0][0]
 file1.essay[0]
 
 corpus3 = []
-for document in file.essay:
+for document in file[file.essay_set == 1].essay:
     tokenized_text = tokenizer.tokenize(document)
     if len(tokenized_text) > 512:
         tokenized_text = tokenized_text[:512]
@@ -210,93 +211,144 @@ BATCH_SIZE = 32
 batched_dataset = processed_dataset.padded_batch(BATCH_SIZE, padded_shapes=((None,), ()))
 next(iter(batched_dataset))
 
-###=======================================================
-###the below is only for checking
-###=======================================================
+TOTAL_BATCHES = math.ceil(len(sorted_document_labels) / BATCH_SIZE)
+TEST_BATCHES = TOTAL_BATCHES // 5
+batched_dataset.shuffle(TOTAL_BATCHES)
+test_data = batched_dataset.take(TEST_BATCHES)
+train_data = batched_dataset.skip(TEST_BATCHES)
 
-corpus5 = []
+next(iter(train_data))
 
-for paragraph in corpus2:
-    document = []
-    for sent in paragraph:
-        sent = str(sent)
-        sent = re.sub(r"@CAPS", " ", sent)
-        sent = re.sub(r"@DATE", " ", sent)
-        sent = re.sub(r"@LOCATION", " ", sent)
-        sent = re.sub(r"@ORGANIZATION", " ", sent)
-        sent = re.sub(r"@NUM", " ", sent)
-        sent = re.sub(r"@PERCENT", " ", sent)
-        sent = re.sub(r"@PERSON", " ", sent)
-        sent = re.sub(r"@MONTH", " ", sent)
-        sent = re.sub(r"@CITY", " ", sent)
-        sent = re.sub(r"@YEAR", " ", sent)
-        sent = re.sub(r"\d+", " ", sent)  ## remove digits
-        sent = re.sub(r"\s+[a-z]\s+", " ", sent,
-                      flags=re.I)  ## remove single character word such as "I", "a" in the middle of a sentence
-        sent = re.sub(r"^[a-z]\s+", " ", sent,
-                      flags=re.I)  ## remove single character word such as "I", "a" at the beginning of a sentence
-        sent = re.sub(r"\s+[a-z]$", " ", sent,
-                      flags=re.I)  ## remove single character word such as "I", "a" at the end of a sentence
-        sent = re.sub(r"^\s", " ", sent)  ## remove space before sentence
-        sent = re.sub(r"\s$", " ", sent)  ## remove space at the end of sentence
-        sent = re.sub(r"[[0-9]]*]", " ", sent)  ## remove [9],[0],etc.
-        sent = re.sub(r"\s+", " ", sent)  ## generated a lot of extra spaces so far so need to remove extra spaces
-        sent = sent.lower()
-        sent = re.sub(r"that's", "that is", sent)
-        sent = re.sub(r"there's", "there is", sent)
-        sent = re.sub(r"what's", "what is", sent)
-        sent = re.sub(r"where's", "where is", sent)
-        sent = re.sub(r"it's", "it is", sent)
-        sent = re.sub(r"who's", "who is", sent)
-        sent = re.sub(r"i'm", "i am", sent)
-        sent = re.sub(r"she's", "she is", sent)
-        sent = re.sub(r"he's", "he is", sent)
-        sent = re.sub(r"they're", "they are", sent)
-        sent = re.sub(r"who're", "who are", sent)
-        sent = re.sub(r"you're", "you are", sent)
-        sent = re.sub(r"ain't", "am not", sent)
-        sent = re.sub(r"aren't", "are not", sent)
-        sent = re.sub(r"wouldn't", "would not", sent)
-        sent = re.sub(r"shouldn't", "should not", sent)
-        sent = re.sub(r"couldn't", "could not", sent)
-        sent = re.sub(r"doesn't", "does not", sent)
-        sent = re.sub(r"isn't", "is not", sent)
-        sent = re.sub(r"can't", "can not", sent)
-        sent = re.sub(r"couldn't", "could not", sent)
-        sent = re.sub(r"won't", "will not", sent)
-        sent = re.sub(r"i've", "i have", sent)
-        sent = re.sub(r"you've", "you have", sent)
-        sent = re.sub(r"they've", "they have", sent)
-        sent = re.sub(r"we've", "we have", sent)
-        sent = re.sub(r"don't", "do not", sent)
-        sent = re.sub(r"didn't", "did not", sent)
-        sent = re.sub(r"i'll", "i will", sent)
-        sent = re.sub(r"you'll", "you will", sent)
-        sent = re.sub(r"he'll", "he will", sent)
-        sent = re.sub(r"she'll", "she will", sent)
-        sent = re.sub(r"they'll", "they will", sent)
-        sent = re.sub(r"we'll", "we will", sent)
-        sent = re.sub(r"i'd", "i would", sent)
-        sent = re.sub(r"you'd", "you would", sent)
-        sent = re.sub(r"he'd", "he would", sent)
-        sent = re.sub(r"she'd", "she would", sent)
-        sent = re.sub(r"they'd", "they would", sent)
-        sent = re.sub(r"we'd", "we would", sent)
-        sent = re.sub(r"she's", "she has", sent)
-        sent = re.sub(r"he's", "he has", sent)
-        document.append(sent)
-    corpus5.append(document)
-
-corpus5[0]
-file1.essay[0]
-
-###=======================================================
-###the above is only for checking
-###=======================================================
+len(set(file[file.essay_set == 1].domain1_score))
 
 
+###==========================================
+###classfication model
+###============================================
 
 
+class TEXT_MODEL(tf.keras.Model):
+
+    def __init__(self,
+                 vocabulary_size,
+                 embedding_dimensions=128,
+                 dnn_units=256,
+                 model_output_classes=11,
+                 dropout_rate=0.1,
+                 training=False,
+                 name="text_model"):
+        super(TEXT_MODEL, self).__init__(name=name)
+
+        self.embedding = layers.Embedding(vocabulary_size,
+                                          embedding_dimensions)
+        self.rnn_layer1 = layers.LSTM(256)  ###, input_shape=(218,1), return_sequences=False)
+
+        self.dense_1 = layers.Dense(units=dnn_units, activation="relu")
+        self.dropout = layers.Dropout(rate=dropout_rate)
+        if model_output_classes == 2:
+            self.last_dense = layers.Dense(units=1,
+                                           activation="sigmoid")
+        else:
+            self.last_dense = layers.Dense(units=model_output_classes,
+                                           activation="softmax")
+        ###if want to do regression: self.last_dense = layers.Dense(units=1, activation="linear")
+
+    def call(self, inputs, training):
+        l = self.embedding(inputs)
+        l_1 = self.rnn_layer1(l)
+
+        ##concatenated = tf.concat([l_1, l_2, l_3], axis=-1)
+        concatenated = self.dense_1(l_1)
+        concatenated = self.dropout(concatenated, training)
+        model_output = self.last_dense(concatenated)
+
+        return model_output
 
 
+VOCAB_LENGTH = len(tokenizer.vocab)
+EMB_DIM = 128
+DNN_UNITS = 64
+OUTPUT_CLASSES = 13
+DROPOUT_RATE = 0.2
+NB_EPOCHS = 5
+
+text_model = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
+                        embedding_dimensions=EMB_DIM,
+                        dnn_units=DNN_UNITS,
+                        model_output_classes=OUTPUT_CLASSES,
+                        dropout_rate=DROPOUT_RATE)
+
+if OUTPUT_CLASSES == 2:
+    text_model.compile(loss="binary_crossentropy",
+                       optimizer="adam",
+                       metrics=["accuracy"])
+else:
+    text_model.compile(loss="sparse_categorical_crossentropy",
+                       optimizer="adam",
+                       metrics=["sparse_categorical_accuracy"])
+    ###text_model.compile(loss="mean_absolute_percentage_error", optimizer="adam")
+
+text_model.fit(train_data, epochs=NB_EPOCHS)
+results = text_model.evaluate(test_data)
+print(results)
+
+
+###==========================================
+###regression method
+###============================================
+
+
+class TEXT_MODEL(tf.keras.Model):
+
+    def __init__(self,
+                 vocabulary_size,
+                 embedding_dimensions=128,
+                 dnn_units=256,
+                 dropout_rate=0.1,
+                 training=False,
+                 name="text_model"):
+        super(TEXT_MODEL, self).__init__(name=name)
+
+        self.embedding = layers.Embedding(vocabulary_size,
+                                          embedding_dimensions)
+        self.rnn_layer1 = layers.LSTM(256)
+
+        self.dense_1 = layers.Dense(units=dnn_units, activation="relu")
+        self.dropout = layers.Dropout(rate=dropout_rate)
+        self.last_dense = layers.Dense(units=1, activation="linear")
+
+    def call(self, inputs, training):
+        l = self.embedding(inputs)
+        l_1 = self.rnn_layer1(l)
+
+        ##concatenated = tf.concat([l_1, l_2, l_3], axis=-1)
+        concatenated = self.dense_1(l_1)
+        concatenated = self.dropout(concatenated, training)
+        model_output = self.last_dense(concatenated)
+
+        return model_output
+
+
+VOCAB_LENGTH = len(tokenizer.vocab)
+EMB_DIM = 128
+DNN_UNITS = 256
+DROPOUT_RATE = 0.2
+NB_EPOCHS = 5
+
+text_model = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
+                        embedding_dimensions=EMB_DIM,
+                        dnn_units=DNN_UNITS,
+                        dropout_rate=DROPOUT_RATE)
+
+text_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
+
+##from keras.callbacks import ModelCheckpoint
+
+##checkpoint_name = 'Weights-{epoch:03d}--{val_accuracy:.5f}.hdf5'
+##checkpoint = ModelCheckpoint(checkpoint_name, monitor='val_loss', verbose = 1, save_best_only = True, mode ='auto')
+##callbacks_list = [checkpoint]
+
+text_model.fit(train_data, epochs=NB_EPOCHS)
+results = text_model.evaluate(test_data)
+print(results)
 
