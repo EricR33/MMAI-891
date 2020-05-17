@@ -153,3 +153,4 @@ print('Mean squared error: %.2f'
 print('Coefficient of determination: %.2f'
       % r2_score(y_test, y_pred))
 
+print(test)
