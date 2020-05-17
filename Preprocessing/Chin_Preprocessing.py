@@ -139,7 +139,7 @@ for i in np.arange(0, len(texts)):
     elm=[suggest[i][0].term, scores[i]]
     result.append(elm)
 
-pprint.pprint([result[i] for i in np.arange(0, 10)])
+pprint.pprint([result[i] for i in np.arange(1, 3)])
 
 # Create Pickle File
 
@@ -148,3 +148,14 @@ file = open('Essay1_SpellCheck.p',"wb")
 pickle.dump(result,file)
 
 file.close()
+
+## Load the data from the pickle file
+
+data_set = pickle.load(open("Essay1_SpellCheck.p", "rb"))
+
+## Converted to np_array for conversion
+data_nparray = np.asarray(data_set)
+
+## Save as a csv, without headers
+headers=["Sr.No", "Essay", "Essay Score"]
+pd.DataFrame(data_nparray).to_csv("Essay_SpellCheck.csv", header=headers)
