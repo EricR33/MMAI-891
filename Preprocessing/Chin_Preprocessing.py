@@ -159,3 +159,17 @@ data_nparray = np.asarray(data_set)
 ## Save as a csv, without headers
 headers=["Sr.No", "Essay", "Essay Score"]
 pd.DataFrame(data_nparray).to_csv("Essay_SpellCheck.csv", header=headers)
+
+#Print Pickle
+import numpy
+import pprint
+import pickle as pkl
+import re
+with open("Essay1_SpellCheck.p", "rb") as f:
+    object = pkl.load(f)
+
+print (object)
+
+#re.sub('Dear local newspaper',' ',object)
+
+pprint.pprint (object)
