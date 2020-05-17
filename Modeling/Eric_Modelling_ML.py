@@ -152,5 +152,3 @@ print('Mean squared error: %.2f'
 # The coefficient of determination: 1 is perfect prediction
 print('Coefficient of determination: %.2f'
       % r2_score(y_test, y_pred))
-
-print(test)
