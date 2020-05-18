@@ -256,7 +256,7 @@ print(sl_df['Sentence'])
 sl_df['sent_clean'] = sl_df['Sentence'].apply(preprocess)
 
 ####################################################
-# CREATE THE WORD CLOUD
+# CREATE THE WORD CLOUD - new code
 ####################################################
 
 # https://www.datacamp.com/community/tutorials/wordcloud-python
