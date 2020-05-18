@@ -1,13 +1,12 @@
 import nltk
-import numpy as np
-import heapq
 import re
 import pandas as pd
 import os
-import pandas_profiling
+
+pwd
 
 # Set the current working directory
-cd '/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project/'
+cd '/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project'
 
 # Directories
 DATASET_DIR = './asap-aes/'
@@ -21,7 +20,7 @@ df.head()
 df.shape
 
 # Downsize the dataframe to only include columns up to and including column 6 "domain1_score"
-df = df.iloc[:,0:7]
+df = df.iloc[:, 0:7]
 df.head()
 df.shape
 
@@ -37,10 +36,25 @@ X.shape
 X.describe
 
 # Pandas Profiler Report
+# pandas_profiling.ProfileReport(df) --> can't get to work in PyCharm
 
 
+# for index, row in df.iterrows():
+#    print(index, row)
 
 # Regular Expression Cleaning
+X_essay = X['essay']
+X_test = X_essay.iloc[12259]
+X_test = nltk.sent_tokenize(X_test)
+
+for i in range(len(X_test)):
+    X_test[i] = re.sub(r'\d', '', X_test[i])    # cleans out digits
+    X_test[i] = re.sub(r'\s+', ' ', X_test[i])  # cleans out multiple spaces
+
+
+sentence = """Welcome to the year 2018. Just ~%* ++++--- arrived at @Jack's place. #fun.
+            I                  love                u"""
+sentence = nltk.sent_tokenize(sentence)
 
 
 
@@ -53,24 +67,9 @@ X.describe
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-paragraph = 'I saw a dog'
+paragraph = """Thank you all so very much. Thank you to the Academy. 
+               Thank you to all of you in this room. I have to congratulate 
+               the other incredible nominees this year."""
 
 dataset = nltk.sent_tokenize(paragraph)             # tokenizes the dataset into sentences
 
@@ -129,10 +128,10 @@ for word in tf_matrix.keys():               # iterates through the term frequenc
         tfidf.append(score)                 # Append the score to the tfidf list which contains the list for 1 key
     tfidf_matrix.append(tfidf)              # Append all of the scores relating to the keys back into the large matrix
 
-    # Convert the model to an array
-    X = np.asarray(tfidf_matrix)
-    X = np.transpose(X)
 
+# Convert the model to an array
+X = np.asarray(tfidf_matrix)
+X = np.transpose(X)
 
 # N-gram Modelling (Character Based)
 
@@ -167,3 +166,11 @@ for i in range(100):
     # current_gram is then set to 'lob' and the process continues
 
 print(result)
+
+
+# N-Gram Modelling - (Word Based)
+text = """Global warming or climate change has become a worldwide concern. It is gradually developing into an 
+        unprecedented environmental crisis evident in melting glaciers, changing weather patterns, rising sea levels, 
+        floods, cyclones and droughts. Global warming implies an increase in the average temperature of the Earth due 
+        to entrapment of greenhouse gases in the earth’s atmosphere."""
+
