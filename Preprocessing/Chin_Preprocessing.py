@@ -80,8 +80,8 @@ text = df.essay[1783]
 data = TextBlob(text)
 print (data.correct())
 
-#Select all the essays from set 1
-set1 = df.loc[df['essay_set']==1]
+#Select all the essays from set 8
+set1 = df.loc[df['essay_set']==8]
 print(set1)
 texts = set1['essay']
 scores = set1['domain1_score']
@@ -150,15 +150,14 @@ pickle.dump(result,file)
 file.close()
 
 ## Load the data from the pickle file
-
-data_set = pickle.load(open("Essay1_SpellCheck.p", "rb"))
+data_set = pkl.load(open("Essay1_SpellCheck.p", "rb"))
 
 ## Converted to np_array for conversion
 data_nparray = np.asarray(data_set)
 
 ## Save as a csv, without headers
 headers=["Sr.No", "Essay", "Essay Score"]
-pd.DataFrame(data_nparray).to_csv("Essay_SpellCheck.csv", header=headers)
+pd.DataFrame(data_nparray).to_csv("Essay1_SpellCheck.csv", header=headers)
 
 #Print Pickle
 import numpy
