@@ -1,6 +1,29 @@
+import os
+import textstat
+import nltk
+import re, collections
+from collections import defaultdict
+import unidecode
+# import numpy as np
+import pandas as pd
+# import tensorflow as tf
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+# from nltk.corpus import stopwords
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+# import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error, r2_score
+from Modeling.final_preprocessing import preprocess
+
 # Regular Expression Cleaning
+def print_string(x):
+    print(x)
 
 def preprocess(x):
+    import re
+    import unidecode
+
     # x = re.sub(r"[abc\\]$", "'", x)        # trying to get rid of \'s notation
     x = re.sub(r"@CAPS", " ", x)
     x = re.sub(r"@DATE", " ", x)
