@@ -14,11 +14,18 @@ import pandas as pd
 from nltk import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import LancasterStemmer, WordNetLemmatizer
+import textstat
+import collections
+from collections import defaultdict
+import os
 
-file = pd.read_csv('C:/Users/Nicky/Desktop/Old_Com/Queens_Master/MMAI891/Project/training_set_rel4.txt', sep='\t',
-                   encoding='latin-1')
-file1 = pd.read_csv('C:/Users/Nicky/Desktop/Old_Com/Queens_Master/MMAI891/Project/training_set_rel4.txt', sep='\t',
-                    encoding='latin-1')
+DATASET_DIR = 'C:/Users/Nicky/Desktop/Old_Com/Queens_Master/MMAI891/Project/'
+
+file = pd.read_csv(os.path.join(DATASET_DIR, "training_set_rel4.txt"), sep='\t', encoding='latin-1')
+file1 = pd.read_csv(os.path.join(DATASET_DIR, "training_set_rel4.txt"), sep='\t', encoding='latin-1')
+
+file = pd.DataFrame(file[file.essay_set == 8])
+file.reset_index(drop=True, inplace=True)
 
 for i in range(len(file.essay)):
     file.essay[i] = str(file.essay[i])
@@ -130,13 +137,46 @@ for i in range(len(file.essay)):
     words = remove_stopwords(words)
     ##words = stem_words(words)
     words = lemmatize_verbs(words)
-    document.append(words)
+    document.append(' '.join(words))
     corpus.append(document)
 
 df = pd.DataFrame(corpus, columns=['essay_clean'])
 file_clean = pd.concat([file, df], axis=1, sort=False)
 
 corpus[0]
+
+
+def count_spell_error(essay_clean):
+    # big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
+    #         and lists of most frequent words from Wiktionary and the British National Corpus.
+    #         It contains about a million words.
+    data = open(os.path.join(DATASET_DIR, "big.txt")).read()
+
+    words_ = re.findall('[a-z]+', data.lower())
+
+    word_dict = collections.defaultdict(lambda: 0)
+
+    for word in words_:
+        word_dict[word] += 1
+
+    mispell_count = 0
+
+    words = essay_clean.split()
+
+    for word in words:
+        if not word in word_dict:
+            mispell_count += 1
+
+    return mispell_count
+
+
+# Feature Engineering (#Taken from Steve's Lecture 5)
+
+
+file_clean['Spelling_Mistakes_Count'] = file_clean['essay_clean'].apply(count_spell_error)
+file_clean['Length'] = file_clean['essay_clean'].apply(lambda x: len(x))
+file_clean['Syllable_Count'] = file_clean['essay_clean'].apply(lambda x: textstat.syllable_count(x))
+file_clean['Flesch_Reading_Ease'] = file_clean['essay_clean'].apply(lambda x: textstat.flesch_reading_ease(x))
 
 ## the below is preprocessing step for BERT model
 ## https://mccormickml.com/2019/05/14/BERT-word-embeddings-tutorial/
@@ -171,13 +211,13 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 nltk.download('punkt')
 
-corpus1 = []
-for i in range(len(file1.essay)):
-    document = []
-    sents = nltk.tokenize.sent_tokenize(file1.essay[i])
-    document.append(sents)
-    corpus1.append(document)
-corpus1[0][0]
+##corpus1 = []
+##for i in range(len(file1.essay)):
+##document = []
+##sents = nltk.tokenize.sent_tokenize(file1.essay[i])
+##document.append(sents)
+##corpus1.append(document)
+##corpus1[0][0]
 
 ##corpus2 = []
 ##for paragraph in corpus1:
@@ -187,10 +227,10 @@ corpus1[0][0]
 ##document.append(marked_sent)
 ##corpus2.append(document)
 
-file1.essay[0]
+##file1.essay[0]
 
 corpus3 = []
-for document in file[file.essay_set == 1].essay:
+for document in file_clean.essay_clean:
     tokenized_text = tokenizer.tokenize(document)
     if len(tokenized_text) > 512:
         tokenized_text = tokenized_text[:512]
@@ -202,24 +242,52 @@ for document in file[file.essay_set == 1].essay:
 ###============================================
 
 
-document_with_len = [[document, file1.domain1_score[i], len(document)] for i, document in enumerate(corpus3)]
-random.shuffle(document_with_len)
-document_with_len.sort(key=lambda x: x[2])
+document_with_len = [[document, file_clean.domain1_score[i], len(document)] for i, document in enumerate(corpus3)]
+features = file_clean[['Spelling_Mistakes_Count', 'Length', 'Syllable_Count', 'Flesch_Reading_Ease']].values.tolist()
+##combine = [i + j for i, j in zip(document_with_len, features)]
+##random.shuffle(document_with_len)
+document_with_len_r = document_with_len.sort(key=lambda x: x[2])
+##len(combine[722][0])
+##document_pad = [[feature[0]+[0]*488][:488] for feature in combine]
+##features_pad = [[feature[3],feature[4],feature[5],feature[6], feature[1]] for feature in combine]
+##combine_wt = [i[0] + j for i, j in zip(document_pad, features_pad)]
+##combine_wt[0]
+
+##sorted_document_labels = [(feature[:-1], feature[-1]) for feature in combine_wt]
+##sorted_document_labels[0]
+
 sorted_document_labels = [(feature[0], feature[1]) for feature in document_with_len]
+
 processed_dataset = tf.data.Dataset.from_generator(lambda: sorted_document_labels, output_types=(tf.int64, tf.int64))
 BATCH_SIZE = 32
+# batched_dataset = processed_dataset.batch(BATCH_SIZE)
 batched_dataset = processed_dataset.padded_batch(BATCH_SIZE, padded_shapes=((None,), ()))
 next(iter(batched_dataset))
 
+features_with_len = [[document, file_clean.domain1_score[i], len(document)] for i, document in enumerate(features)]
+sorted_features_labels = [(feature[0], feature[1]) for feature in features_with_len]
+
+features_dataset = tf.data.Dataset.from_generator(lambda: sorted_features_labels, output_types=(tf.int64, tf.int64))
+BATCH_SIZE = 32
+# batched_dataset = processed_dataset.batch(BATCH_SIZE)
+batched_features = features_dataset.padded_batch(BATCH_SIZE, padded_shapes=((None,), ()))
+next(iter(batched_features))
+
 TOTAL_BATCHES = math.ceil(len(sorted_document_labels) / BATCH_SIZE)
 TEST_BATCHES = TOTAL_BATCHES // 5
-batched_dataset.shuffle(TOTAL_BATCHES)
+##batched_dataset.shuffle(TOTAL_BATCHES)
 test_data = batched_dataset.take(TEST_BATCHES)
 train_data = batched_dataset.skip(TEST_BATCHES)
 
+test_features = batched_features.take(TEST_BATCHES)
+train_features = batched_features.skip(TEST_BATCHES)
+
+##train_data_1 = train_data[:488]
+
 next(iter(train_data))
 
-len(set(file[file.essay_set == 1].domain1_score))
+
+##len(set(file[file.essay_set==1].domain1_score))
 
 
 ###==========================================
@@ -253,12 +321,12 @@ class TEXT_MODEL(tf.keras.Model):
                                            activation="softmax")
         ###if want to do regression: self.last_dense = layers.Dense(units=1, activation="linear")
 
-    def call(self, inputs, training):
+    def call(self, inputs, features, training):
         l = self.embedding(inputs)
         l_1 = self.rnn_layer1(l)
 
-        ##concatenated = tf.concat([l_1, l_2, l_3], axis=-1)
-        concatenated = self.dense_1(l_1)
+        concatenated = tf.concat([l_1, features, axis = -1)
+        concatenated = self.dense_1(concatenated)
         concatenated = self.dropout(concatenated, training)
         model_output = self.last_dense(concatenated)
 
@@ -288,7 +356,7 @@ else:
                        metrics=["sparse_categorical_accuracy"])
     ###text_model.compile(loss="mean_absolute_percentage_error", optimizer="adam")
 
-text_model.fit(train_data, epochs=NB_EPOCHS)
+text_model.fit(train_data, features, epochs=NB_EPOCHS)
 results = text_model.evaluate(test_data)
 print(results)
 
@@ -317,11 +385,11 @@ class TEXT_MODEL(tf.keras.Model):
         self.dropout = layers.Dropout(rate=dropout_rate)
         self.last_dense = layers.Dense(units=1, activation="linear")
 
-    def call(self, inputs, training):
+    def call(self, inputs, features, training):
         l = self.embedding(inputs)
         l_1 = self.rnn_layer1(l)
 
-        ##concatenated = tf.concat([l_1, l_2, l_3], axis=-1)
+        concatenated = tf.concat([l_1, features], axis=-1)
         concatenated = self.dense_1(l_1)
         concatenated = self.dropout(concatenated, training)
         model_output = self.last_dense(concatenated)
@@ -348,7 +416,7 @@ text_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_
 ##checkpoint = ModelCheckpoint(checkpoint_name, monitor='val_loss', verbose = 1, save_best_only = True, mode ='auto')
 ##callbacks_list = [checkpoint]
 
-text_model.fit(train_data, epochs=NB_EPOCHS)
+text_model.fit(train_data, train_features, epochs=NB_EPOCHS)
 results = text_model.evaluate(test_data)
 print(results)
 
