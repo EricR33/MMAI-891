@@ -14,15 +14,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 # import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
-from Modeling.final_preprocessing import preprocess
+from Modeling.final_preprocessing import print_string, lem
 
-print_string('hello')
+# os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891')
 
-os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891')
+x = 'hello how are you doing today'
+lem(x)
 
-preprocess('string')
-
-
+print_string(x)
 
 
 os.getcwd()
