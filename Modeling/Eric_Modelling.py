@@ -16,8 +16,10 @@ from keras.layers.embeddings import Embedding
 from keras.callbacks import EarlyStopping
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
+from Modeling.final_preprocessing import lem, pre_process, count_spell_error
 
 # pwd
+os.getcwd()
 
 os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project')
 
@@ -38,111 +40,11 @@ df.head()
 
 # stop_words = set(stopwords.words('english') + stopwords.word('french'))   # haven't used this below
 
-lemmer = WordNetLemmatizer()
-
-# Regular Expression Cleaning
-
-
-def preprocess(x):
-    # x = re.sub(r"[abc\\]$", "'", x)        # trying to get rid of \'s notation
-    x = re.sub(r"@CAPS", " ", x)
-    x = re.sub(r"@DATE", " ", x)
-    x = re.sub(r"@LOCATION", " ", x)
-    x = re.sub(r"@ORGANIZATION", " ", x)
-    x = re.sub(r"@NUM", " ", x)
-    x = re.sub(r"@PERCENT", " ", x)
-    x = re.sub(r"@PERSON", " ", x)
-    x = re.sub(r"@MONTH", " ", x)
-    x = re.sub(r"@CITY", " ", x)
-    x = re.sub(r"@YEAR", " ", x)
-    x = re.sub(r"dear", " ", x)
-    x = re.sub(r"local newspaper", " ", x)
-    x = re.sub(r"dear newspaper", " ", x)
-    x = re.sub(r'[^\w\s]', '', x)
-    x = unidecode.unidecode(x)
-    x = re.sub(r'\s+', ' ', x)
-    x = re.sub(r'\d+', '', x)
-    x = x.lower()
-    x = re.sub(r"that's", "that is", x)
-    x = re.sub(r"there's", "there is", x)
-    x = re.sub(r"what's", "what is", x)
-    x = re.sub(r"where's", "where is", x)
-    x = re.sub(r"it's", "it is", x)
-    x = re.sub(r"who's", "who is", x)
-    x = re.sub(r"i'm", "i am", x)
-    x = re.sub(r"she's", "she is", x)
-    x = re.sub(r"he's", "he is", x)
-    x = re.sub(r"they're", "they are", x)
-    x = re.sub(r"who're", "who are", x)
-    x = re.sub(r"you're", "you are", x)
-    x = re.sub(r"ain't", "am not", x)
-    x = re.sub(r"aren't", "are not", x)
-    x = re.sub(r"wouldn't", "would not", x)
-    x = re.sub(r"shouldn't", "should not", x)
-    x = re.sub(r"couldn't", "could not", x)
-    x = re.sub(r"doesn't", "does not", x)
-    x = re.sub(r"isn't", "is not", x)
-    x = re.sub(r"can't", "can not", x)
-    x = re.sub(r"couldn't", "could not", x)
-    x = re.sub(r"won't", "will not", x)
-    x = re.sub(r"i've", "i have", x)
-    x = re.sub(r"you've", "you have", x)
-    x = re.sub(r"they've", "they have", x)
-    x = re.sub(r"we've", "we have", x)
-    x = re.sub(r"don't", "do not", x)
-    x = re.sub(r"didn't", "did not", x)
-    x = re.sub(r"i'll", "i will", x)
-    x = re.sub(r"you'll", "you will", x)
-    x = re.sub(r"he'll", "he will", x)
-    x = re.sub(r"she'll", "she will", x)
-    x = re.sub(r"they'll", "they will", x)
-    x = re.sub(r"we'll", "we will", x)
-    x = re.sub(r"i'd", "i would", x)
-    x = re.sub(r"you'd", "you would", x)
-    x = re.sub(r"he'd", "he would", x)
-    x = re.sub(r"she'd", "she would", x)
-    x = re.sub(r"they'd", "they would", x)
-    x = re.sub(r"we'd", "we would", x)
-    x = re.sub(r"she's", "she has", x)
-    x = re.sub(r"he's", "he has", x)
-    x = [lemmer.lemmatize(w) for w in x.split()]
-    return ' '.join(x)
-
-
-def count_spell_error(essay):
-    clean_essay = re.sub(r'\W', ' ', str(essay).lower())
-    clean_essay = re.sub(r'[0-9]', '', clean_essay)
-
-    # big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
-    #         and lists of most frequent words from Wiktionary and the British National Corpus.
-    #         It contains about a million words.
-    data = open('big.txt').read()
-
-    words_ = re.findall('[a-z]+', data.lower())
-
-    word_dict = collections.defaultdict(lambda: 0)
-
-    for word in words_:
-        word_dict[word] += 1
-
-    clean_essay = re.sub(r'\W', ' ', str(essay).lower())
-    clean_essay = re.sub(r'[0-9]', '', clean_essay)
-
-    mispell_count = 0
-
-    words = clean_essay.split()
-
-    for word in words:
-        if not word in word_dict:
-            mispell_count += 1
-
-    return mispell_count
-
 # Delete the essays that have less than 200 words ~ approx. 20 essays
 
 # Apply preprocessing onto both dataframes
-df['Essay_Prep'] = df['Essay'].apply(preprocess)
-df1['Essay_Prep'] = df1['essay'].apply(preprocess)
+df['Essay_Prep'] = df['Essay'].apply(pre_process)
+df1['Essay_Prep'] = df1['essay'].apply(pre_process)
 
 # Check for Mispelled Words in Original DataFrame (df1)
 # df1['Spelling_Mistakes_Count'] = df1['Essay_Prep'].apply(count_spell_error)
@@ -178,7 +80,7 @@ X_train_pad[:5]
 print(X_train_pad.shape)
 
 # LSTM Network
-MAX_NB_WORDS = 8572
+MAX_NB_WORDS = 9799
 EMBEDDING_DIM = 100
 
 lstm_model = Sequential()
@@ -195,7 +97,7 @@ lstm_model.summary()
 # model.add(SpatialDropout1D(0.2))
 # model.add(Dense(13, activation='linear'))
 
-epochs = 10
+epochs = 5
 batch_size = 64
 
 # Having issues with this line of code --> i need to figure out how to run 1 essay at a time instead of the whole corpus

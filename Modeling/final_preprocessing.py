@@ -1,10 +1,9 @@
-# Regular Expression Cleaning
-def print_string(x):
-    return x
-
-# Lemmatizer needs to be called after we check for spelling mistakes
-
 from nltk.stem import WordNetLemmatizer
+import re
+import unidecode
+
+# Regular Expression Cleaning
+
 
 def lem(x):
     lemmer = WordNetLemmatizer()
@@ -13,7 +12,8 @@ def lem(x):
 
 # checking number of misspelled words (This is taken from https://github.com/shubhpawar/Automated-Essay-Scoring)
 
-def preprocess(x):
+
+def pre_process(x):
     # x = re.sub(r"[abc\\]$", "'", x)        # trying to get rid of \'s notation
     x = re.sub(r"@CAPS", " ", x)
     x = re.sub(r"@DATE", " ", x)
