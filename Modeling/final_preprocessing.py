@@ -1,8 +1,13 @@
-from nltk.stem import WordNetLemmatizer
 import re
 import unidecode
+import collections
+import nltk
+import pandas as pd
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords, wordnet
 
-# Regular Expression Cleaning
+##
+# Lemmatizer
 
 
 def lem(x):
@@ -10,10 +15,11 @@ def lem(x):
     x = [lemmer.lemmatize(w) for w in x.split()]
     return ' '.join(x)
 
-# checking number of misspelled words (This is taken from https://github.com/shubhpawar/Automated-Essay-Scoring)
+##
+# Regular Expression Cleaning
 
 
-def pre_process(x):
+def regex_cleaning(x):
     # x = re.sub(r"[abc\\]$", "'", x)        # trying to get rid of \'s notation
     x = re.sub(r"@CAPS", " ", x)
     x = re.sub(r"@DATE", " ", x)
@@ -86,10 +92,25 @@ def pre_process(x):
     return x
 
 
+##
+# Delete Essays With < 200 words = ~ approx. 20 essays --> need to figure this out
+
+
+# def less_than_200(essay):
+    # df['len_words'] = df['Essay_Prep'].apply(nltk.word_tokenize(['Essay_Prep']))
+    # less_than_200_index = df[ df['len_words']].index
+    # df.drop(less_than_200_index, inplace=True
+
+##
+# EVERYTHING BELOW IS TAKEN FROM: https://github.com/shubhpawar/Automated-Essay-Scoring
+
+# Count Number of Incorrectly Spelled Words
+
+
 def count_spell_error(essay):
-        # big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
-    #         and lists of most frequent words from Wiktionary and the British National Corpus.
-    #         It contains about a million words.
+    #   big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
+    #   and lists of most frequent words from Wiktionary and the British National Corpus.
+    #   It contains about a million words.
     data = open('big.txt').read()
 
     words_ = re.findall('[a-z]+', data.lower())
@@ -107,7 +128,153 @@ def count_spell_error(essay):
     words = clean_essay.split()
 
     for word in words:
-        if not word in word_dict:
+        if word not in word_dict:
             mispell_count += 1
 
     return mispell_count
+
+##
+# Calculating Average Word Length in an Essay
+
+def avg_word_len(essay):
+
+    clean_essay = re.sub(r'\W', ' ', essay)
+    words = nltk.word_tokenize(essay)
+
+    return sum(len(word) for word in words) / len(words)
+
+##
+# Calculating Number of Words in an Essay
+
+def word_count(essay):
+
+    clean_essay = re.sub(r'\W', ' ', essay)
+    words = nltk.word_tokenize(clean_essay)
+
+    return len(words)
+
+##
+# Calculating Number of Characters in an Essay
+
+def char_count(essay):
+    clean_essay = re.sub(r'\s', '', str(essay).lower())
+
+    return len(clean_essay)
+
+##
+# Calculating Number of Sentences in an Essay
+
+def sent_count(essay):
+
+    sentences = nltk.sent_tokenize(essay)
+
+    return len(sentences)
+
+
+##
+# Calculating Number of Lemmas Per Essay
+
+def count_lemmas(essay):
+    tokenized_sentences = nltk.word_tokenize(essay)
+
+    lemmas = []
+    wordnet_lemmatizer = WordNetLemmatizer()
+
+    for sentence in tokenized_sentences:
+        tagged_tokens = nltk.pos_tag(sentence)
+
+        for token_tuple in tagged_tokens:
+
+            pos_tag = token_tuple[1]
+
+            if pos_tag.startswith('N'):
+                pos = wordnet.NOUN
+                lemmas.append(wordnet_lemmatizer.lemmatize(token_tuple[0], pos))
+            elif pos_tag.startswith('J'):
+                pos = wordnet.ADJ
+                lemmas.append(wordnet_lemmatizer.lemmatize(token_tuple[0], pos))
+            elif pos_tag.startswith('V'):
+                pos = wordnet.VERB
+                lemmas.append(wordnet_lemmatizer.lemmatize(token_tuple[0], pos))
+            elif pos_tag.startswith('R'):
+                pos = wordnet.ADV
+                lemmas.append(wordnet_lemmatizer.lemmatize(token_tuple[0], pos))
+            else:
+                pos = wordnet.NOUN
+                lemmas.append(wordnet_lemmatizer.lemmatize(token_tuple[0], pos))
+
+    lemma_count = len(set(lemmas))
+
+    return lemma_count
+
+
+##
+# calculating number of nouns, adjectives, verbs and adverbs in an essay
+
+def count_pos(essay):
+    tokenized_sentences = nltk.word_tokenize(essay)
+
+    noun_count = 0
+    adj_count = 0
+    verb_count = 0
+    adv_count = 0
+
+    for sentence in tokenized_sentences:
+        tagged_tokens = nltk.pos_tag(sentence)
+
+        for token_tuple in tagged_tokens:
+            pos_tag = token_tuple[1]
+
+            if pos_tag.startswith('N'):
+                noun_count += 1
+            elif pos_tag.startswith('J'):
+                adj_count += 1
+            elif pos_tag.startswith('V'):
+                verb_count += 1
+            elif pos_tag.startswith('R'):
+                adv_count += 1
+
+    return noun_count, adj_count, verb_count, adv_count
+
+##
+# Compile All Of The Pre-processing & Feature Engineering
+
+
+def final_preprocessing(data):
+    df = data.copy()
+    #df1 = data1.copy()
+
+    # 1) Apply Regular Express Cleaning on both dataframes
+    df['Essay_Prep'] = df['Essay'].apply(regex_cleaning)
+    df1['Essay_Prep'] = df1['essay'].apply(regex_cleaning)
+
+    # 2) Append Mispelled Words in df1
+    df1['Spelling_Mistakes_Count'] = df1['Essay_Prep'].apply(count_spell_error)
+    df1 = pd.DataFrame(data1['Spelling_Mistakes_Count'])
+    df = pd.concat([df, df1], axis=1)
+
+    # 4) Append Character Counter
+    df['Char_Count'] = df['Essay_Prep'].apply(char_count)
+
+    # 5) Append Word Counter
+    df['Word_Count'] = df['Essay_Prep'].apply(word_count)
+
+    # 6) Append Sentence Counter
+    df['Sent_Count'] = df['Essay_Prep'].apply(sent_count)
+
+    # 7) Append Average Word Counter
+    df['Avg_Word_Count'] = df['Essay_Prep'].apply(avg_word_len)
+
+    # 8) Append Lemma Counter  --> Takes too long to run
+    df['Lemma_Count'] = df['Essay_Prep'].apply(count_lemmas)
+
+    # 9) Append Noun/Adjective/Verb/Adverb Counter --> Takes too long to run
+    df['noun_count'], df['adj_count'], df['verb_count'], \
+    df['adv_count'] = zip(*df['Essay_Prep'].map(count_pos))
+
+    # 3) Apply Lematizer
+    df['Essay_Prep'] = df['Essay_Prep'].apply(lem)
+
+    return df
+
+
