@@ -6,6 +6,7 @@ import pandas as pd
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords, wordnet
 
+
 ##
 # Lemmatizer
 
@@ -15,12 +16,18 @@ def lem(x):
     x = [lemmer.lemmatize(w) for w in x.split()]
     return ' '.join(x)
 
+
 ##
 # Regular Expression Cleaning
 
 
 def regex_cleaning(x):
     # x = re.sub(r"[abc\\]$", "'", x)        # trying to get rid of \'s notation
+    x = re.sub('\s+$', '', re.sub('\s+', ' ', re.sub('\.', '. ', x)))
+    if x[-1] != '.':
+        x += '.'
+    x = x.replace('-', ' ')
+    x = x.strip("\\")
     x = re.sub(r"@CAPS", " ", x)
     x = re.sub(r"@DATE", " ", x)
     x = re.sub(r"@LOCATION", " ", x)
@@ -28,22 +35,22 @@ def regex_cleaning(x):
     x = re.sub(r"@NUM", " ", x)
     x = re.sub(r"@PERCENT", " ", x)
     x = re.sub(r"@PERSON", " ", x)
-    x = re.sub(r"pERSON", " ", x)               # Chin's spellchecker version
-    x = re.sub(r" mon ", " mom ", x)            # need to fix the mispelled word of mom to mon in spell checked version
+    x = re.sub(r"pERSON", " ", x)  # Chin's spellchecker version
+    x = re.sub(r" mon ", " mom ", x)  # need to fix the mispelled word of mom to mon in spell checked version
     x = re.sub(r"@MONTH", " ", x)
     x = re.sub(r"@CITY", " ", x)
     x = re.sub(r"@YEAR", " ", x)
     x = re.sub(r"dear", " ", x)
     x = re.sub(r"local newspaper", " ", x)
     x = re.sub(r"dear newspaper", " ", x)
-    x = re.sub(r'[^\w\s]', '', x)
-    x = unidecode.unidecode(x)
-    x = re.sub(r'\s+', ' ', x)
-    x = re.sub(r'\d+', '', x)
+    # r = re.sub(r'^[ \t]+|[ \t]+$', ' ', x)
     x = x.lower()
-    x = re.sub(r"lifers", "life", x)            # Chin's spellchecker version
+    x = re.sub(r"lifers", "life", x)  # Chin's spellchecker version
     x = re.sub(r"that's", "that is", x)
     x = re.sub(r"there's", "there is", x)
+    x = re.sub(r"weren't", "were not", x)
+    x = re.sub(r"weren\'t", "were not", x)
+    x = re.sub(r"wasn\'t", "was not", x)
     x = re.sub(r"what's", "what is", x)
     x = re.sub(r"where's", "where is", x)
     x = re.sub(r"it's", "it is", x)
@@ -64,6 +71,7 @@ def regex_cleaning(x):
     x = re.sub(r"can't", "can not", x)
     x = re.sub(r"couldn't", "could not", x)
     x = re.sub(r"won't", "will not", x)
+    x = re.sub(r"who's", "who is", x)
     x = re.sub(r"i've", "i have", x)
     x = re.sub(r"you've", "you have", x)
     x = re.sub(r"they've", "they have", x)
@@ -83,12 +91,17 @@ def regex_cleaning(x):
     x = re.sub(r"they'd", "they would", x)
     x = re.sub(r"we'd", "we would", x)
     x = re.sub(r"she's", "she has", x)
+    x = re.sub(r"wasn't", "was not", x)
     x = re.sub(r"he's", "he has", x)
-    x = re.sub(r"caps", " ", x)               # Chin's spellchecker version
-    x = re.sub(r"location", " ", x)           # Chin's spellchecker version
-    x = re.sub(r"date", " ", x)               # Chin's spellchecker version
-    x = re.sub(r"person", " ", x)             # Chin's spellchecker version
-    x = re.sub(r"organization", " ", x)       # Chin's spellchecker version
+    x = re.sub(r"caps", " ", x)  # Chin's spellchecker version
+    x = re.sub(r"location", " ", x)  # Chin's spellchecker version
+    x = re.sub(r"date", " ", x)  # Chin's spellchecker version
+    x = re.sub(r"person", " ", x)  # Chin's spellchecker version
+    x = re.sub(r"organization", " ", x)  # Chin's spellchecker version
+    x = re.sub(r'[^\w\s]', '', x)
+    x = re.sub(r'\s+', ' ', x)
+    x = re.sub(r'\d+', '', x)
+    x = unidecode.unidecode(x)
     return x
 
 
@@ -97,9 +110,9 @@ def regex_cleaning(x):
 
 
 # def less_than_200(essay):
-    # df['len_words'] = df['Essay_Prep'].apply(nltk.word_tokenize(['Essay_Prep']))
-    # less_than_200_index = df[ df['len_words']].index
-    # df.drop(less_than_200_index, inplace=True
+# df['len_words'] = df['Essay_Prep'].apply(nltk.word_tokenize(['Essay_Prep']))
+# less_than_200_index = df[ df['len_words']].index
+# df.drop(less_than_200_index, inplace=True
 
 ##
 # EVERYTHING BELOW IS TAKEN FROM: https://github.com/shubhpawar/Automated-Essay-Scoring
@@ -111,7 +124,7 @@ def count_spell_error(essay):
     #   big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
     #   and lists of most frequent words from Wiktionary and the British National Corpus.
     #   It contains about a million words.
-    data = open('big.txt').read()
+    data = open('gdrive/My Drive/Other/big.txt').read()
 
     words_ = re.findall('[a-z]+', data.lower())
 
@@ -127,31 +140,34 @@ def count_spell_error(essay):
 
     words = clean_essay.split()
 
+    #mispelled_word_list = []
     for word in words:
         if word not in word_dict:
             mispell_count += 1
+            #mispelled_word_list.append(word)
 
-    return mispell_count
+    return mispell_count, #mispelled_word_list
+
 
 ##
 # Calculating Average Word Length in an Essay
 
 def avg_word_len(essay):
-
     clean_essay = re.sub(r'\W', ' ', essay)
     words = nltk.word_tokenize(essay)
 
     return sum(len(word) for word in words) / len(words)
 
+
 ##
 # Calculating Number of Words in an Essay
 
 def word_count(essay):
-
     clean_essay = re.sub(r'\W', ' ', essay)
     words = nltk.word_tokenize(clean_essay)
 
     return len(words)
+
 
 ##
 # Calculating Number of Characters in an Essay
@@ -161,11 +177,11 @@ def char_count(essay):
 
     return len(clean_essay)
 
+
 ##
 # Calculating Number of Sentences in an Essay
 
 def sent_count(essay):
-
     sentences = nltk.sent_tokenize(essay)
 
     return len(sentences)
@@ -236,13 +252,14 @@ def count_pos(essay):
 
     return noun_count, adj_count, verb_count, adv_count
 
+
 ##
 # Compile All Of The Pre-processing & Feature Engineering
 
 
-def final_preprocessing(data):
+def final_preprocessing(data, data1):
     df = data.copy()
-    #df1 = data1.copy()
+    df1 = data1.copy()
 
     # 1) Apply Regular Express Cleaning on both dataframes
     df['Essay_Prep'] = df['Essay'].apply(regex_cleaning)
@@ -276,5 +293,3 @@ def final_preprocessing(data):
     df['Essay_Prep'] = df['Essay_Prep'].apply(lem)
 
     return df
-
-
