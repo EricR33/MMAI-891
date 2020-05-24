@@ -38,6 +38,8 @@ df = df.drop(['Unnamed: 0'], axis=1)
 df.info()
 df.head()
 
+
+
 # stop_words = set(stopwords.words('english') + stopwords.word('french'))   # haven't used this below
 
 # Delete the essays that have less than 200 words ~ approx. 20 essays

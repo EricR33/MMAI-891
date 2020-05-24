@@ -23,7 +23,6 @@ def lem(x):
 
 
 def regex_cleaning(x):
-    # x = re.sub(r"[abc\\]$", "'", x)        # trying to get rid of \'s notation
     x = re.sub('\s+$', '', re.sub('\s+', ' ', re.sub('\.', '. ', x)))
     if x[-1] != '.':
         x += '.'
@@ -191,7 +190,7 @@ def sent_count(essay):
 # Calculating Number of Lemmas Per Essay
 
 def count_lemmas(essay):
-    tokenized_sentences = nltk.word_tokenize(essay)
+    tokenized_sentences = tokenize(essay)
 
     lemmas = []
     wordnet_lemmatizer = WordNetLemmatizer()
@@ -225,10 +224,20 @@ def count_lemmas(essay):
 
 
 ##
+# Tokenize a sentence into words
+
+def sentence_to_wordlist(raw_sentence):
+    clean_sentence = re.sub("[^a-zA-Z0-9]", " ", raw_sentence)
+    tokens = nltk.word_tokenize(clean_sentence)
+
+    return tokens
+
+
+##
 # calculating number of nouns, adjectives, verbs and adverbs in an essay
 
 def count_pos(essay):
-    tokenized_sentences = nltk.word_tokenize(essay)
+    tokenized_sentences = tokenize(essay)
 
     noun_count = 0
     adj_count = 0
@@ -254,6 +263,23 @@ def count_pos(essay):
 
 
 ##
+# Tokenize the Sentences
+
+def tokenize(essay):
+    stripped_essay = essay.strip()
+
+    tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+    raw_sentences = tokenizer.tokenize(stripped_essay)
+
+    tokenized_sentences = []
+    for raw_sentence in raw_sentences:
+        if len(raw_sentence) > 0:
+            tokenized_sentences.append(sentence_to_wordlist(raw_sentence))
+
+    return tokenized_sentences
+
+
+##
 # Compile All Of The Pre-processing & Feature Engineering
 
 
@@ -275,7 +301,7 @@ def final_preprocessing(data, data1):
     df['Word_Count'] = df['Essay_Prep'].apply(word_count)
 
     # 6) Append Sentence Counter
-    df['Sent_Count'] = df['Essay_Prep'].apply(sent_count)
+    df['Sent_Count'] = df1['Essay_Prep'].apply(sent_count)
 
     # 7) Append Average Word Counter
     df['Avg_Word_Length'] = df['Essay_Prep'].apply(avg_word_len)
@@ -298,9 +324,6 @@ def final_preprocessing(data, data1):
 
     # 13) Apply Lematizer
     df['Essay_Prep'] = df['Essay_Prep'].apply(lem)
-
-    # 14) Delete All Periods
-    df['Essay_Prep'] = df['Essay_Prep']
 
     return df
 
