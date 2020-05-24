@@ -18,6 +18,26 @@ import textstat
 import collections
 from collections import defaultdict
 import os
+from sklearn import preprocessing
+##
+##pip install https://github.com/dmlc/gluon-nlp/tarball/master
+##from bert-embedding import BertEmbedding
+
+import tensorflow as tf
+import tensorflow_hub as hub
+
+#### /print debug information to stdout
+
+##max_seq_length = 128  # Your choice here.
+##input_word_ids = tf.keras.layers.Input(shape=(max_seq_length,), dtype=tf.int32,
+##name="input_word_ids")
+##input_mask = tf.keras.layers.Input(shape=(max_seq_length,), dtype=tf.int32,
+##name="input_mask")
+##segment_ids = tf.keras.layers.Input(shape=(max_seq_length,), dtype=tf.int32,
+##name="segment_ids")
+##bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/2",
+##trainable=False)
+##pooled_output, sequence_output = bert_layer([input_word_ids, input_mask, segment_ids])
 
 DATASET_DIR = 'C:/Users/Nicky/Desktop/Old_Com/Queens_Master/MMAI891/Project/'
 
@@ -143,8 +163,6 @@ for i in range(len(file.essay)):
 df = pd.DataFrame(corpus, columns=['essay_clean'])
 file_clean = pd.concat([file, df], axis=1, sort=False)
 
-corpus[0]
-
 
 def count_spell_error(essay_clean):
     # big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
@@ -178,6 +196,16 @@ file_clean['Length'] = file_clean['essay_clean'].apply(lambda x: len(x))
 file_clean['Syllable_Count'] = file_clean['essay_clean'].apply(lambda x: textstat.syllable_count(x))
 file_clean['Flesch_Reading_Ease'] = file_clean['essay_clean'].apply(lambda x: textstat.flesch_reading_ease(x))
 
+file_clean['Spelling_Mistakes_Count'] = (file_clean['Spelling_Mistakes_Count'] - file_clean[
+    'Spelling_Mistakes_Count'].min()) / (file_clean['Spelling_Mistakes_Count'].max() - file_clean[
+    'Spelling_Mistakes_Count'].min())
+file_clean['Length'] = (file_clean['Length'] - file_clean['Length'].min()) / (
+            file_clean['Length'].max() - file_clean['Length'].min())
+file_clean['Syllable_Count'] = (file_clean['Syllable_Count'] - file_clean['Syllable_Count'].min()) / (
+            file_clean['Syllable_Count'].max() - file_clean['Syllable_Count'].min())
+file_clean['Flesch_Reading_Ease'] = (file_clean['Flesch_Reading_Ease'] - file_clean['Flesch_Reading_Ease'].min()) / (
+            file_clean['Flesch_Reading_Ease'].max() - file_clean['Flesch_Reading_Ease'].min())
+
 ## the below is preprocessing step for BERT model
 ## https://mccormickml.com/2019/05/14/BERT-word-embeddings-tutorial/
 ##pip install pytorch-pretrained-bert
@@ -206,18 +234,104 @@ from tensorflow.keras import layers
 import random
 import math
 
+##pip install bert-for-tf2
+##pip install sentencepiece
+
+file1 = pd.DataFrame(file1[file1.essay_set == 8])
+file1.reset_index(drop=True, inplace=True)
+
+for i in range(len(file1.essay)):
+    file1.essay[i] = str(file1.essay[i])
+    file1.essay[i] = file1.essay[i].lower()
+    file1.essay[i] = re.sub(r"@caps", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@date", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@location", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@organization", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@num", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@percent", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@person", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@month", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@city", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"@year", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"dear editor", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"dear newspaper", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"dear local newspaper", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"newspaper", " ", file1.essay[i])
+    file1.essay[i] = re.sub(r"that's", "that is", file1.essay[i])
+    file1.essay[i] = re.sub(r"there's", "there is", file1.essay[i])
+    file1.essay[i] = re.sub(r"what's", "what is", file1.essay[i])
+    file1.essay[i] = re.sub(r"where's", "where is", file1.essay[i])
+    file1.essay[i] = re.sub(r"it's", "it is", file1.essay[i])
+    file1.essay[i] = re.sub(r"who's", "who is", file1.essay[i])
+    file1.essay[i] = re.sub(r"i'm", "i am", file1.essay[i])
+    file1.essay[i] = re.sub(r"she's", "she is", file1.essay[i])
+    file1.essay[i] = re.sub(r"he's", "he is", file1.essay[i])
+    file1.essay[i] = re.sub(r"they're", "they are", file1.essay[i])
+    file1.essay[i] = re.sub(r"who're", "who are", file1.essay[i])
+    file1.essay[i] = re.sub(r"you're", "you are", file1.essay[i])
+    file1.essay[i] = re.sub(r"ain't", "am not", file1.essay[i])
+    file1.essay[i] = re.sub(r"aren't", "are not", file1.essay[i])
+    file1.essay[i] = re.sub(r"wouldn't", "would not", file1.essay[i])
+    file1.essay[i] = re.sub(r"shouldn't", "should not", file1.essay[i])
+    file1.essay[i] = re.sub(r"couldn't", "could not", file1.essay[i])
+    file1.essay[i] = re.sub(r"doesn't", "does not", file1.essay[i])
+    file1.essay[i] = re.sub(r"isn't", "is not", file1.essay[i])
+    file1.essay[i] = re.sub(r"can't", "can not", file1.essay[i])
+    file1.essay[i] = re.sub(r"couldn't", "could not", file1.essay[i])
+    file1.essay[i] = re.sub(r"won't", "will not", file1.essay[i])
+    file1.essay[i] = re.sub(r"i've", "i have", file1.essay[i])
+    file1.essay[i] = re.sub(r"you've", "you have", file1.essay[i])
+    file1.essay[i] = re.sub(r"they've", "they have", file1.essay[i])
+    file1.essay[i] = re.sub(r"we've", "we have", file1.essay[i])
+    file1.essay[i] = re.sub(r"don't", "do not", file1.essay[i])
+    file1.essay[i] = re.sub(r"didn't", "did not", file1.essay[i])
+    file1.essay[i] = re.sub(r"i'll", "i will", file1.essay[i])
+    file1.essay[i] = re.sub(r"you'll", "you will", file1.essay[i])
+    file1.essay[i] = re.sub(r"he'll", "he will", file1.essay[i])
+    file1.essay[i] = re.sub(r"she'll", "she will", file1.essay[i])
+    file1.essay[i] = re.sub(r"they'll", "they will", file1.essay[i])
+    file1.essay[i] = re.sub(r"we'll", "we will", file1.essay[i])
+    file1.essay[i] = re.sub(r"i'd", "i would", file1.essay[i])
+    file1.essay[i] = re.sub(r"you'd", "you would", file1.essay[i])
+    file1.essay[i] = re.sub(r"he'd", "he would", file1.essay[i])
+    file1.essay[i] = re.sub(r"she'd", "she would", file1.essay[i])
+    file1.essay[i] = re.sub(r"they'd", "they would", file1.essay[i])
+    file1.essay[i] = re.sub(r"we'd", "we would", file1.essay[i])
+    file1.essay[i] = re.sub(r"she's", "she has", file1.essay[i])
+    file1.essay[i] = re.sub(r"he's", "he has", file1.essay[i])
+    ##file1.essay[i] = re.sub(r"\W", " ", file1.essay[i])   ## remove non word characters
+    file1.essay[i] = re.sub(r"\d+", " ", file1.essay[i])  ## remove digits
+    file1.essay[i] = re.sub(r"\s+[a-z]\s+", " ", file1.essay[i],
+                            flags=re.I)  ## remove single character word such as "I", "a" in the middle of a sentence
+    file1.essay[i] = re.sub(r"^[a-z]\s+", " ", file1.essay[i],
+                            flags=re.I)  ## remove single character word such as "I", "a" at the beginning of a sentence
+    file1.essay[i] = re.sub(r"\s+[a-z]$", " ", file1.essay[i],
+                            flags=re.I)  ## remove single character word such as "I", "a" at the end of a sentence
+    file1.essay[i] = re.sub(r"^\s+", " ", file1.essay[i])  ## remove space before sentence
+    file1.essay[i] = re.sub(r"\s+$", " ", file1.essay[i])  ## remove space at the end of sentence
+    file1.essay[i] = re.sub(r"\[[0-9]]*\]", " ", file1.essay[i])  ## remove [9],[0],etc.
+    file1.essay[i] = re.sub(r"\s+", " ",
+                            file1.essay[i])  ## generated a lot of extra spaces so far so need to remove extra spaces
+
+##BertTokenizer = bert.bert_tokenization.FullTokenizer
+##bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",
+##trainable=False)
+
+##vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
+##to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
+##tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
 # Load pre-trained model tokenizer (vocabulary)
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 nltk.download('punkt')
 
-##corpus1 = []
-##for i in range(len(file1.essay)):
-##document = []
-##sents = nltk.tokenize.sent_tokenize(file1.essay[i])
-##document.append(sents)
-##corpus1.append(document)
-##corpus1[0][0]
+corpus1 = []
+for i in range(len(file1.essay)):
+    document = []
+    sents = nltk.tokenize.sent_tokenize(file1.essay[i])
+    document.append(sents)
+    corpus1.append(document[0])
+corpus1[0]
 
 ##corpus2 = []
 ##for paragraph in corpus1:
@@ -242,19 +356,33 @@ for document in file_clean.essay_clean:
 ###============================================
 
 
-document_with_len = [[document, file_clean.domain1_score[i], len(document)] for i, document in enumerate(corpus3)]
+document_with_len = [[document, len(document), file_clean.domain1_score[i]] for i, document in enumerate(corpus3)]
 features = file_clean[['Spelling_Mistakes_Count', 'Length', 'Syllable_Count', 'Flesch_Reading_Ease']].values.tolist()
-##combine = [i + j for i, j in zip(document_with_len, features)]
-##random.shuffle(document_with_len)
-document_with_len_r = document_with_len.sort(key=lambda x: x[2])
-##len(combine[722][0])
-##document_pad = [[feature[0]+[0]*488][:488] for feature in combine]
-##features_pad = [[feature[3],feature[4],feature[5],feature[6], feature[1]] for feature in combine]
-##combine_wt = [i[0] + j for i, j in zip(document_pad, features_pad)]
-##combine_wt[0]
+combine = [[j[-1]] + i + j[:-1] for i, j in zip(features, document_with_len)]
+combine[1]
+random.shuffle(combine)
+combine.sort(key=lambda x: x[-1])
+len(combine[722][5])
 
-##sorted_document_labels = [(feature[:-1], feature[-1]) for feature in combine_wt]
-##sorted_document_labels[0]
+sorted_document_labels = [(feature[1:5] + feature[5:-1][0], feature[0]) for feature in combine]
+sorted_document_labels[0]
+
+processed_dataset = tf.data.Dataset.from_generator(lambda: sorted_document_labels, output_types=(tf.float32, tf.int64))
+BATCH_SIZE = 32
+batched_dataset = processed_dataset.padded_batch(BATCH_SIZE, padded_shapes=((None,), ()))
+next(iter(batched_dataset))
+
+TOTAL_BATCHES = math.ceil(len(sorted_document_labels) / BATCH_SIZE)
+TEST_BATCHES = TOTAL_BATCHES // 5
+batched_dataset.shuffle(TOTAL_BATCHES)
+test_data = batched_dataset.take(TEST_BATCHES)
+train_data = batched_dataset.skip(TEST_BATCHES)
+
+next(iter(train_data))
+
+###===========================================
+###please ignore
+###===============================================
 
 sorted_document_labels = [(feature[0], feature[1]) for feature in document_with_len]
 
@@ -291,7 +419,7 @@ next(iter(train_data))
 
 
 ###==========================================
-###classfication model
+###classfication model (please ignore)
 ###============================================
 
 
@@ -362,9 +490,72 @@ print(results)
 
 
 ###==========================================
-###regression method
+###regression method: Meaningful vector + manual features (concatenation)
 ###============================================
 
+
+class TEXT_MODEL(tf.keras.Model):
+
+    def __init__(self,
+                 vocabulary_size,
+                 embedding_dimensions=128,
+                 dnn_units=256,
+                 dropout_rate=0.1,
+                 training=False,
+                 name="text_model"):
+        super(TEXT_MODEL, self).__init__(name=name)
+
+        self.embedding = layers.Embedding(vocabulary_size,
+                                          embedding_dimensions)
+        self.rnn_layer1 = layers.LSTM(256, input_shape=(None, 1))
+
+        self.dense_1 = layers.Dense(units=dnn_units, activation="relu")
+        self.dropout = layers.Dropout(rate=dropout_rate)
+        self.last_dense = layers.Dense(units=1, activation="linear")
+
+    def call(self, inputs, training):
+        nn_input = tf.slice(inputs, [0, 4], [-1, -1])
+        ##l = self.embedding(nn_input)
+        ##nn_input = tf.expand_dims(nn_input, -1)
+        l_1 = self.rnn_layer1(nn_input)
+
+        feature_input = tf.slice(inputs, [0, 0], [-1, 4])
+        feature_input = tf.cast(feature_input, dtype=tf.float32)
+        concatenated = tf.concat([l_1, feature_input], axis=-1)
+        concatenated = self.dense_1(concatenated)
+        concatenated = self.dropout(concatenated, training)
+        model_output = self.last_dense(concatenated)
+
+        return model_output
+
+
+VOCAB_LENGTH = len(tokenizer.vocab)
+EMB_DIM = 128
+DNN_UNITS = 256
+DROPOUT_RATE = 0.2
+NB_EPOCHS = 20
+
+text_model = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
+                        embedding_dimensions=EMB_DIM,
+                        dnn_units=DNN_UNITS,
+                        dropout_rate=DROPOUT_RATE)
+
+text_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
+
+##from keras.callbacks import ModelCheckpoint
+
+##checkpoint_name = 'Weights-{epoch:03d}--{val_accuracy:.5f}.hdf5'
+##checkpoint = ModelCheckpoint(checkpoint_name, monitor='val_loss', verbose = 1, save_best_only = True, mode ='auto')
+##callbacks_list = [checkpoint]
+
+text_model.fit(train_data, epochs=NB_EPOCHS)
+results = text_model.evaluate(test_data)
+print(results)
+
+
+###==========================
+## With no manual features
+##==========================
 
 class TEXT_MODEL(tf.keras.Model):
 
@@ -385,11 +576,14 @@ class TEXT_MODEL(tf.keras.Model):
         self.dropout = layers.Dropout(rate=dropout_rate)
         self.last_dense = layers.Dense(units=1, activation="linear")
 
-    def call(self, inputs, features, training):
-        l = self.embedding(inputs)
+    def call(self, inputs, training):
+        nn_input = tf.slice(inputs, [0, 4], [-1, -1])
+        l = self.embedding(nn_input)
         l_1 = self.rnn_layer1(l)
 
-        concatenated = tf.concat([l_1, features], axis=-1)
+        ##feature_input = tf.slice(inputs, [0, 0], [-1, 4])
+        ##feature_input = tf.cast(feature_input, dtype = tf.float32)
+        ##concatenated = tf.concat([l_1, feature_input], axis=-1)
         concatenated = self.dense_1(l_1)
         concatenated = self.dropout(concatenated, training)
         model_output = self.last_dense(concatenated)
@@ -401,7 +595,7 @@ VOCAB_LENGTH = len(tokenizer.vocab)
 EMB_DIM = 128
 DNN_UNITS = 256
 DROPOUT_RATE = 0.2
-NB_EPOCHS = 5
+NB_EPOCHS = 20
 
 text_model = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
                         embedding_dimensions=EMB_DIM,
@@ -416,7 +610,71 @@ text_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_
 ##checkpoint = ModelCheckpoint(checkpoint_name, monitor='val_loss', verbose = 1, save_best_only = True, mode ='auto')
 ##callbacks_list = [checkpoint]
 
-text_model.fit(train_data, train_features, epochs=NB_EPOCHS)
+text_model.fit(train_data, epochs=NB_EPOCHS)
 results = text_model.evaluate(test_data)
 print(results)
+
+
+###==========================
+## manual features attached to the input feeding into NN
+##==========================
+
+class TEXT_MODEL(tf.keras.Model):
+
+    def __init__(self,
+                 vocabulary_size,
+                 embedding_dimensions=128,
+                 dnn_units=256,
+                 dropout_rate=0.1,
+                 training=False,
+                 name="text_model"):
+        super(TEXT_MODEL, self).__init__(name=name)
+
+        self.embedding = layers.Embedding(vocabulary_size,
+                                          embedding_dimensions)
+        self.rnn_layer1 = layers.LSTM(256)
+
+        self.dense_1 = layers.Dense(units=dnn_units, activation="relu")
+        self.dropout = layers.Dropout(rate=dropout_rate)
+        self.last_dense = layers.Dense(units=1, activation="linear")
+
+    def call(self, inputs, training):
+        ##nn_input = tf.slice(inputs, [0, 4], [-1, -1])
+        l = self.embedding(inputs)
+        l_1 = self.rnn_layer1(l)
+
+        ##feature_input = tf.slice(inputs, [0, 0], [-1, 4])
+        ##feature_input = tf.cast(feature_input, dtype = tf.float32)
+        ##concatenated = tf.concat([l_1, feature_input], axis=-1)
+        concatenated = self.dense_1(l_1)
+        concatenated = self.dropout(concatenated, training)
+        model_output = self.last_dense(concatenated)
+
+        return model_output
+
+
+VOCAB_LENGTH = len(tokenizer.vocab)
+EMB_DIM = 128
+DNN_UNITS = 256
+DROPOUT_RATE = 0.2
+NB_EPOCHS = 20
+
+text_model = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
+                        embedding_dimensions=EMB_DIM,
+                        dnn_units=DNN_UNITS,
+                        dropout_rate=DROPOUT_RATE)
+
+text_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
+
+##from keras.callbacks import ModelCheckpoint
+
+##checkpoint_name = 'Weights-{epoch:03d}--{val_accuracy:.5f}.hdf5'
+##checkpoint = ModelCheckpoint(checkpoint_name, monitor='val_loss', verbose = 1, save_best_only = True, mode ='auto')
+##callbacks_list = [checkpoint]
+
+text_model.fit(train_data, epochs=NB_EPOCHS)
+results = text_model.evaluate(test_data)
+print(results)
+
+
 
