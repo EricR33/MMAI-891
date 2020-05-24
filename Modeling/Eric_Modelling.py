@@ -38,6 +38,8 @@ df = df.drop(['Unnamed: 0'], axis=1)
 df.info()
 df.head()
 
+
+
 # stop_words = set(stopwords.words('english') + stopwords.word('french'))   # haven't used this below
 
 # Delete the essays that have less than 200 words ~ approx. 20 essays
@@ -86,9 +88,10 @@ EMBEDDING_DIM = 100
 lstm_model = Sequential()
 lstm_model.add(Embedding(input_dim=MAX_NB_WORDS+1, output_dim=500, input_length=X_train_pad.shape[1]))
 lstm_model.add(LSTM(500, dropout=0.2, recurrent_dropout=0.2))
+
 lstm_model.add(Dense(1, activation='linear'))
 
-lstm_model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
+lstm_model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['mean_absolute_error'])
 lstm_model.summary()
 
 # Setting up the Keras LSTM Network
@@ -97,7 +100,7 @@ lstm_model.summary()
 # model.add(SpatialDropout1D(0.2))
 # model.add(Dense(13, activation='linear'))
 
-epochs = 5
+epochs = 3
 batch_size = 64
 
 # Having issues with this line of code --> i need to figure out how to run 1 essay at a time instead of the whole corpus
