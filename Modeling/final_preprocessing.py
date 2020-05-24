@@ -1,4 +1,5 @@
 import re
+import textstat
 import unidecode
 import collections
 import nltk
@@ -98,7 +99,6 @@ def regex_cleaning(x):
     x = re.sub(r"date", " ", x)  # Chin's spellchecker version
     x = re.sub(r"person", " ", x)  # Chin's spellchecker version
     x = re.sub(r"organization", " ", x)  # Chin's spellchecker version
-    x = re.sub(r'[^\w\s]', '', x)
     x = re.sub(r'\s+', ' ', x)
     x = re.sub(r'\d+', '', x)
     x = unidecode.unidecode(x)
@@ -140,13 +140,13 @@ def count_spell_error(essay):
 
     words = clean_essay.split()
 
-    #mispelled_word_list = []
+    # mispelled_word_list = []
     for word in words:
         if word not in word_dict:
             mispell_count += 1
-            #mispelled_word_list.append(word)
+            # mispelled_word_list.append(word)
 
-    return mispell_count, #mispelled_word_list
+    return mispell_count  # mispelled_word_list
 
 
 ##
@@ -261,14 +261,12 @@ def final_preprocessing(data, data1):
     df = data.copy()
     df1 = data1.copy()
 
-    # 1) Apply Regular Express Cleaning on both dataframes
+    # 1) Apply Regular Expression Cleaning on both dataframes
     df['Essay_Prep'] = df['Essay'].apply(regex_cleaning)
     df1['Essay_Prep'] = df1['essay'].apply(regex_cleaning)
 
-    # 2) Append Mispelled Words in df1
-    df1['Spelling_Mistakes_Count'] = df1['Essay_Prep'].apply(count_spell_error)
-    df1 = pd.DataFrame(data1['Spelling_Mistakes_Count'])
-    df = pd.concat([df, df1], axis=1)
+    # 2) Append Mispelled Words
+    df['Spelling_Mistakes_Count'] = df1['Essay_Prep'].apply(count_spell_error)
 
     # 4) Append Character Counter
     df['Char_Count'] = df['Essay_Prep'].apply(char_count)
@@ -280,16 +278,30 @@ def final_preprocessing(data, data1):
     df['Sent_Count'] = df['Essay_Prep'].apply(sent_count)
 
     # 7) Append Average Word Counter
-    df['Avg_Word_Count'] = df['Essay_Prep'].apply(avg_word_len)
+    df['Avg_Word_Length'] = df['Essay_Prep'].apply(avg_word_len)
 
     # 8) Append Lemma Counter  --> Takes too long to run
     df['Lemma_Count'] = df['Essay_Prep'].apply(count_lemmas)
 
-    # 9) Append Noun/Adjective/Verb/Adverb Counter --> Takes too long to run
+    # 9) Append Noun/Adjective/Verb/Adverb Counter
     df['noun_count'], df['adj_count'], df['verb_count'], \
     df['adv_count'] = zip(*df['Essay_Prep'].map(count_pos))
 
-    # 3) Apply Lematizer
+    # 10) Calculating Length
+    df['Length'] = df['Essay_Prep'].apply(lambda x: len(x))
+
+    # 11) Calculating Syllable Count
+    df['Syllable_Count'] = df['Essay_Prep'].apply(lambda x: textstat.syllable_count(x))
+
+    # 12) Calculating Flesch Reading Ease
+    df['Flesch_Reading_Ease'] = df['Essay_Prep'].apply(lambda x: textstat.flesch_reading_ease(x))
+
+    # 13) Apply Lematizer
     df['Essay_Prep'] = df['Essay_Prep'].apply(lem)
 
+    # 14) Delete All Periods
+    df['Essay_Prep'] = df['Essay_Prep']
+
     return df
+
+
