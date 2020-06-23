@@ -1,5 +1,5 @@
 # MMAI-891
-Natural Language Preprocessing
+Natural Language Processing:
 This GitHub repository is dedicated to the development of an NLP solution for grading essay submissions.
 
 The final submission files for MMAI-891 NLP are the following:
