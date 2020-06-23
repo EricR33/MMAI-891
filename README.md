@@ -4,7 +4,9 @@ This GitHub repository is dedicated to the development of an NLP solution for gr
 
 The final submission files for MMAI-891 NLP are the following:
 1) Modelling / Final_Preprocessing.py   --> This is the combined preprocessing file
-2) Modelling / GLOVE_LSTM_NN_Model.py     --> This is the final recommended NN for the project
+2) Modelling / GLOVE_LSTM_NN_Model.py   --> This is the final recommended NN for the project
+3) Modelliong / new_df-5.csv            --> This is the standardized csv data file after preprocessing
+4) Modelling / training_set_rel3.csv    --> This is the raw csv data file before any preprocessing (Kaggle dataset)
 3) Modelling / LSTM_NN_Model.py         --> This is the baseline NN
 4) Modelling / NN_Models.py             --> This contains all NN models including the final solution
 5) Modelling / ML_Models.py             --> This is the Linear Regression & Gradient Boosting                                                          Regressor models
