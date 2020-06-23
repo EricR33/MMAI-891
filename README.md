@@ -7,8 +7,9 @@ The final submission files for MMAI-891 NLP are the following:
 2) Modelling / GLOVE_LSTM_NN_Model.py     --> This is the final recommended NN for the project
 3) Modelling / LSTM_NN_Model.py         --> This is the baseline NN
 4) Modelling / NN_Models.py             --> This contains all NN models including the final solution
-4) Modelling / ML_Models.py             --> This is the Linear Regression & Gradient Boosting               .                                           Regressor models
-5) Modelling / training_2-LSTM.zip      --> This is the saved weights for the GLOVE_LSTM_NN_Model.py file
+5) Modelling / ML_Models.py             --> This is the Linear Regression & Gradient Boosting                                                          Regressor models
+6) Modelling / training_2-LSTM.zip      --> This is the saved weights for the GLOVE_LSTM_NN_Model.py file
+7) big.txt        --> This is the dictionary used to calculate the number of mispelled words
 
 
 Instructions to run GLOVE_LSTM_NN_Model.py File
