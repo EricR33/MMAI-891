@@ -11,8 +11,9 @@ The final submission files for MMAI-891 NLP are the following:
 
 
 Instructions to run GLOVE_LSTM_NN.py File
-#1) Run this code inside Google Colab. There might be slight differences if attempted to run on a Python IDE
-
+#1) Save the clean version of Kaggle dataset (Modelling / new_df-5.csv) in "gdrive/My Drive/MMAI891/" in Google Drive; unzip Modelling /  training_2-LSTM.zip and save the weights in "gdrive/My Drive/MMAI891/training_2/" in Google Drive
+#2) Run this code inside Google Colab. There might be slight differences if attempted to run on a Python IDE
+#3) All attempted models are saved in  Modelling / GLOVE_LSTM_NN_Model.py
 
 
 Instructions to run Final_Preprocessing.py
