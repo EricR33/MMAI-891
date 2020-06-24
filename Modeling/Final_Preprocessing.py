@@ -116,7 +116,7 @@ def count_spell_error(essay):
     #   big.txt: It is a concatenation of public domain book excerpts from Project Gutenberg
     #   and lists of most frequent words from Wiktionary and the British National Corpus.
     #   It contains about a million words.
-    data = open('gdrive/My Drive/Other/big.txt').read()
+    data = open('big.txt').read()
 
     words_ = re.findall('[a-z]+', data.lower())
 
@@ -326,6 +326,7 @@ def final_preprocessing(data, data1):
 
 os.getcwd()
 
+# Change this to the directory where the GitHub files are located
 os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891/Modeling')
 
 
@@ -344,7 +345,13 @@ data = data.drop(['Unnamed: 0'], axis=1)
 data.info()
 data.head()
 
-## PREPROCESSING STEPS:
+##
+# PREPROCESSING STEPS:
 
-df = final_preprocessing(data)
+df = final_preprocessing(data, data1)
 print(f'the df shape after feature engineering is: {df.shape}')
+
+##
+# Export to csv file
+
+# df.to_csv("new_df-5.csv", index=False)
