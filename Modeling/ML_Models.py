@@ -9,7 +9,7 @@ from sklearn.model_selection import GridSearchCV
 
 os.getcwd()
 
-os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project')
+os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891/Modeling')
 
 # Directories
 DATASET_DIR = './asap-aes/'

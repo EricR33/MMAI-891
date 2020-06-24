@@ -3,8 +3,10 @@ import textstat
 import unidecode
 import collections
 import nltk
+import os
 from nltk.stem import WordNetLemmatizer
-from nltk.corpus import stopwords, wordnet
+from nltk.corpus import wordnet
+
 
 
 ##
@@ -323,22 +325,20 @@ def final_preprocessing(data, data1):
 
 os.getcwd()
 
-os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project')
+os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891/Modeling')
 
-# Directories
-DATASET_DIR = './asap-aes/'
 
 ##
 # IMPORTING DATA
 
 # Import Data For Spell Checker
-data1 = pd.read_csv(os.path.join(DATASET_DIR, "training_set_rel3.tsv"), sep='\t', encoding='ISO-8859-1')
+data1 = pd.read_csv(("training_set_rel3.tsv"), sep='\t', encoding='ISO-8859-1')
 data1 = data1[12253:].copy()
 data1 = pd.DataFrame(data=data1, columns=["essay", "domain1_score"])
 data1 = data1.reset_index(drop=True)
 
 # Import Data from Chin's Spell Checked Document
-data = pd.read_csv(os.path.join(DATASET_DIR, "Essays_SpellCheck_Set8.csv"))
+data = pd.read_csv("Essays_SpellCheck_Set8.csv")
 data = data.drop(['Unnamed: 0'], axis=1)
 data.info()
 data.head()
