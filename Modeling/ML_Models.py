@@ -14,7 +14,7 @@ os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891/Mode
 
 ##
 # IMPORTING SET #8 PREPROCESSED FILE
-data_8 = pd.read_csv("new_df-5.csv"))
+data_8 = pd.read_csv("new_df-5.csv")
 
 data_8 = data_8.drop(['Unnamed: 0'], axis=1)
 data_8.info()
@@ -22,7 +22,7 @@ data_8.head()
 
 ##
 # IMPORT SET #2 PREPROCESSED FILE
-data_2 = pd.read_csv("test_set_2_preprocessed.csv"))
+data_2 = pd.read_csv("test_set_2_preprocessed.csv")
 
 data_2 = data_2.drop(['Unnamed: 0'], axis=1)
 data_2.info()
