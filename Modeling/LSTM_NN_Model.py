@@ -1,13 +1,7 @@
 import os
-# import nltk
-import re, collections
-import unidecode
-import numpy as np
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from nltk.stem import WordNetLemmatizer
-# from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from keras.layers import SpatialDropout1D, LSTM, Dense, Embedding
@@ -16,46 +10,27 @@ from keras.layers.embeddings import Embedding
 from keras.callbacks import EarlyStopping
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from Modeling.final_preprocessing import lem, pre_process, count_spell_error
 
 # pwd
 os.getcwd()
 
-os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project')
+os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891/Modeling')
 
-# Directories
-DATASET_DIR = './asap-aes/'
-WORKBOOK_DIR = './courses/'
+
 
 # Import Data For Mispelled Word Counter
-df1 = pd.read_csv(os.path.join(DATASET_DIR, "training_set_rel3.tsv"), sep='\t', encoding='ISO-8859-1')
-df1 = df1[12253:].copy()
-df1 = pd.DataFrame(data=df1, columns=["essay","domain1_score"])
+data = pd.read_csv("new_df-5.csv")
 
-# Import Data from Spell Checked Document
-df = pd.read_csv(os.path.join(DATASET_DIR, "Essays_SpellCheck_Set8.csv"))
-df = df.drop(['Unnamed: 0'], axis=1)
+df = data.drop(['Unnamed: 0'], axis=1)
 df.info()
 df.head()
 
-
-
-# stop_words = set(stopwords.words('english') + stopwords.word('french'))   # haven't used this below
-
-# Delete the essays that have less than 200 words ~ approx. 20 essays
-
-# Apply preprocessing onto both dataframes
-df['Essay_Prep'] = df['Essay'].apply(pre_process)
-df1['Essay_Prep'] = df1['essay'].apply(pre_process)
-
-# Check for Mispelled Words in Original DataFrame (df1)
-# df1['Spelling_Mistakes_Count'] = df1['Essay_Prep'].apply(count_spell_error)
-
-print(df.shape, df1.shape)
+print(df.shape)
 
 # Split X & Y
 X = df['Essay_Prep'].values
 y = df['Essay Score'].values
+
 
 print(y.shape, type(y), X.shape, type(X))
 
@@ -100,14 +75,12 @@ lstm_model.summary()
 # model.add(SpatialDropout1D(0.2))
 # model.add(Dense(13, activation='linear'))
 
-epochs = 3
+epochs = 4
 batch_size = 64
 
-# Having issues with this line of code --> i need to figure out how to run 1 essay at a time instead of the whole corpus
 history = lstm_model.fit(X_train_pad, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1,
                     callbacks=[EarlyStopping(monitor='val_loss', patience=3, min_delta=0.0001)])
 
-import matplotlib.pyplot as plt
 training_loss = history.history['loss']
 test_loss = history.history['val_loss']
 epoch_count = range(1, len(training_loss) + 1)
@@ -118,18 +91,4 @@ plt.legend(['Training Loss', 'Test Loss'])
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.show()
-
-# Plot the accuracy
-fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-ax.plot((history.history['mean_squared_error']), 'r', label='train')
-ax.plot((history.history['val_mean_squared_error']), 'b', label='val')
-ax.set_xlabel(r'Epoch', fontsize=20)
-ax.set_ylabel(r'Mean Squared Error', fontsize=20)
-ax.legend()
-ax.tick_params(labelsize=20)
-
-
-
-# accr = model.evaluate(X_test, y_test)
-# print('Test set\n  Loss: {:0.3f}\n  Accuracy: {:0.3f}'.format(accr[0], accr[1]))
 
