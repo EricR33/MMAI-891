@@ -3,7 +3,6 @@ import textstat
 import unidecode
 import collections
 import nltk
-import pandas as pd
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords, wordnet
 
@@ -103,15 +102,6 @@ def regex_cleaning(x):
     x = unidecode.unidecode(x)
     return x
 
-
-##
-# Delete Essays With < 200 words = ~ approx. 20 essays --> need to figure this out
-
-
-# def less_than_200(essay):
-# df['len_words'] = df['Essay_Prep'].apply(nltk.word_tokenize(['Essay_Prep']))
-# less_than_200_index = df[ df['len_words']].index
-# df.drop(less_than_200_index, inplace=True
 
 ##
 # EVERYTHING BELOW IS TAKEN FROM: https://github.com/shubhpawar/Automated-Essay-Scoring
@@ -327,3 +317,33 @@ def final_preprocessing(data, data1):
 
     return df
 
+
+##
+# Code for Running Preprocessing
+
+os.getcwd()
+
+os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/MMAI_891/Project')
+
+# Directories
+DATASET_DIR = './asap-aes/'
+
+##
+# IMPORTING DATA
+
+# Import Data For Spell Checker
+data1 = pd.read_csv(os.path.join(DATASET_DIR, "training_set_rel3.tsv"), sep='\t', encoding='ISO-8859-1')
+data1 = data1[12253:].copy()
+data1 = pd.DataFrame(data=data1, columns=["essay", "domain1_score"])
+data1 = data1.reset_index(drop=True)
+
+# Import Data from Chin's Spell Checked Document
+data = pd.read_csv(os.path.join(DATASET_DIR, "Essays_SpellCheck_Set8.csv"))
+data = data.drop(['Unnamed: 0'], axis=1)
+data.info()
+data.head()
+
+## PREPROCESSING STEPS:
+
+df = final_preprocessing(data)
+print(f'the df shape after feature engineering is: {df.shape}')
