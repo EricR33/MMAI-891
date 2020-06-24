@@ -6,6 +6,7 @@ import nltk
 import os
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
+import pandas as pd
 
 
 
@@ -332,7 +333,7 @@ os.chdir('/Users/ericross/School/Queens_MMAI/MMAI/PyCharm Projects/MMAI-891/Mode
 # IMPORTING DATA
 
 # Import Data For Spell Checker
-data1 = pd.read_csv(("training_set_rel3.tsv"), sep='\t', encoding='ISO-8859-1')
+data1 = pd.read_csv("training_set_rel3.csv")
 data1 = data1[12253:].copy()
 data1 = pd.DataFrame(data=data1, columns=["essay", "domain1_score"])
 data1 = data1.reset_index(drop=True)
